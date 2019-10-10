@@ -1,0 +1,1421 @@
+#!/bin/bash
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+# Check if user is root
+if [ $(id -u) != "0" ]; then
+    echo "Error: You must be root to run this script!"
+    exit 1
+fi
+
+echo "+-------------------------------------------+"
+echo "|    Manager for LNMP, Written by Licess    |"
+echo "+-------------------------------------------+"
+echo "|              https://lnmp.org             |"
+echo "+-------------------------------------------+"
+
+PHPFPMPIDFILE=/usr/local/php/var/run/php-fpm.pid
+
+arg1=$1
+arg2=$2
+
+lnmp_start()
+{
+    echo "Starting LNMP..."
+    /etc/init.d/nginx start
+    /etc/init.d/mysql start
+    /etc/init.d/php-fpm start
+    for mphpfpm in /etc/init.d/php-fpm[5,7].[0-9]
+    do
+        if [ -f ${mphpfpm} ]; then
+            ${mphpfpm} start
+        fi
+    done
+}
+
+lnmp_stop()
+{
+    echo "Stoping LNMP..."
+    /etc/init.d/nginx stop
+    /etc/init.d/mysql stop
+    /etc/init.d/php-fpm stop
+    for mphpfpm in /etc/init.d/php-fpm[5,7].[0-9]
+    do
+        if [ -f ${mphpfpm} ]; then
+            ${mphpfpm} stop
+        fi
+    done
+}
+
+lnmp_reload()
+{
+    echo "Reload LNMP..."
+    /etc/init.d/nginx reload
+    /etc/init.d/mysql reload
+    /etc/init.d/php-fpm reload
+    for mphpfpm in /etc/init.d/php-fpm[5,7].[0-9]
+    do
+        if [ -f ${mphpfpm} ]; then
+            ${mphpfpm} reload
+        fi
+    done
+}
+
+lnmp_kill()
+{
+    echo "Kill nginx,php-fpm,mysql process..."
+    killall nginx
+    killall mysqld
+    killall php-fpm
+    killall php-cgi
+    echo "done."
+}
+
+lnmp_status()
+{
+    /etc/init.d/nginx status
+    if [ -f $PHPFPMPIDFILE ]; then
+        echo "php-fpm is runing!"
+    else
+        echo "php-fpm is stop!"
+    fi
+    /etc/init.d/mysql status
+}
+
+Function_Vhost()
+{
+    case "$1" in
+        [aA][dD][dD])
+            Add_VHost
+            ;;
+        [lL][iI][sS][tT])
+            List_VHost
+            ;;
+        [dD][eE][lL])
+            Del_VHost
+            ;;
+        [eE][xX][iI][tT])
+            exit 1
+            ;;
+        *)
+            echo "Usage: lnmp vhost {add|list|del}"
+            exit 1
+            ;;
+    esac
+}
+
+Function_Database()
+{
+    case "$1" in
+        [aA][dD][dD])
+            Add_Database_Menu
+            Add_Database
+            ;;
+        [lL][iI][sS][tT])
+            List_Database
+            ;;
+        [dD][eE][lL])
+            Del_Database
+            ;;
+        [eE][dD][iI][tT])
+            Edit_Database
+            ;;
+        [eE][xX][iI][tT])
+            exit 1
+            ;;
+        *)
+            echo "Usage: lnmp database {add|list|del}"
+            exit 1
+            ;;
+    esac
+}
+
+Function_Ftp()
+{
+    case "$1" in
+        [aA][dD][dD])
+            Add_Ftp_Menu
+            Add_Ftp
+            ;;
+        [lL][iI][sS][tT])
+            List_Ftp
+            ;;
+        [dD][eE][lL])
+            Del_Ftp
+            ;;
+        [eE][dD][iI][tT])
+            Edit_Ftp
+            ;;
+        [eE][xX][iI][tT])
+            exit 1
+            ;;
+        [sS][hH][oO][wW])
+            Show_Ftp
+            ;;
+        *)
+            echo "Usage: lnmp ftp {add|list|del}"
+            exit 1
+            ;;
+    esac
+}
+
+Add_VHost_Config()
+{
+    if [ ! -f /usr/local/nginx/conf/rewrite/${rewrite}.conf ]; then
+        echo "Create Virtul Host Rewrite file......"
+        touch /usr/local/nginx/conf/rewrite/${rewrite}.conf
+        echo "Create rewirte file successful,You can add rewrite rule into /usr/local/nginx/conf/rewrite/${rewrite}.conf."
+    else
+        echo "You select the exist rewrite rule:/usr/local/nginx/conf/rewrite/${rewrite}.conf"
+    fi
+
+    cat >"/usr/local/nginx/conf/vhost/${domain}.conf"<<EOF
+server
+    {
+        listen 80;
+        #listen [::]:80;
+        server_name ${domain} ${moredomain};
+        index index.html index.htm index.php default.html default.htm default.php;
+        root  ${vhostdir};
+
+        include rewrite/${rewrite}.conf;
+        #error_page   404   /404.html;
+
+        # Deny access to PHP files in specific directory
+        #location ~ /(wp-content|uploads|wp-includes|images)/.*\.php$ { deny all; }
+
+        ${include_enable_php}
+
+        location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+        {
+            expires      30d;
+        }
+
+        location ~ .*\.(js|css)?$
+        {
+            expires      12h;
+        }
+
+        location ~ /.well-known {
+            allow all;
+        }
+
+        location ~ /\.
+        {
+            deny all;
+        }
+
+        ${al}
+    }
+EOF
+
+    echo "Test Nginx configure file......"
+    /usr/local/nginx/sbin/nginx -t
+    echo "Reload Nginx......"
+    /usr/local/nginx/sbin/nginx -s reload
+}
+
+Multiple_PHP_Select()
+{
+    if [[ ! -s /usr/local/php5.2/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php5.2.conf ]] && [[ ! -s /usr/local/php5.3/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php5.3.conf ]] && [[ ! -s /usr/local/php5.4/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php5.4.conf ]] && [[ ! -s /usr/local/php5.5/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php5.5.conf ]] && [[ ! -s /usr/local/php5.6/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php5.6.conf ]] && [[ ! -s /usr/local/php7.0/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php7.0.conf ]] && [[ ! -s /usr/local/php7.1/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php7.1.conf ]] && [[ ! -s /usr/local/php7.2/sbin/php-fpm && ! -s /usr/local/nginx/conf/enable-php7.2.conf ]]; then
+        if [ "${enable_pathinfo}" == "y" ]; then
+            include_enable_php="include enable-php-pathinfo.conf;"
+        else
+            include_enable_php="include enable-php.conf;"
+        fi
+    else
+        echo "Multiple PHP version found, Please select the PHP version."
+        Cur_PHP_Version="`/usr/local/php/bin/php-config --version`"
+        Echo_Green "1: Default Main PHP ${Cur_PHP_Version}"
+        if [[ -s /usr/local/php5.2/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php5.2.conf && -s /etc/init.d/php-fpm5.2 ]]; then
+            Echo_Green "2: PHP 5.2 [found]"
+        fi
+        if [[ -s /usr/local/php5.3/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php5.3.conf && -s /etc/init.d/php-fpm5.3 ]]; then
+            Echo_Green "3: PHP 5.3 [found]"
+        fi
+        if [[ -s /usr/local/php5.4/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php5.4.conf && -s /etc/init.d/php-fpm5.4 ]]; then
+            Echo_Green "4: PHP 5.4 [found]"
+        fi
+        if [[ -s /usr/local/php5.5/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php5.5.conf && -s /etc/init.d/php-fpm5.5 ]]; then
+            Echo_Green "5: PHP 5.5 [found]"
+        fi
+        if [[ -s /usr/local/php5.6/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php5.6.conf && -s /etc/init.d/php-fpm5.6 ]]; then
+            Echo_Green "6: PHP 5.6 [found]"
+        fi
+        if [[ -s /usr/local/php7.0/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php7.0.conf && -s /etc/init.d/php-fpm7.0 ]]; then
+            Echo_Green "7: PHP 7.0 [found]"
+        fi
+        if [[ -s /usr/local/php7.1/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php7.1.conf && -s /etc/init.d/php-fpm7.1 ]]; then
+            Echo_Green "8: PHP 7.1 [found]"
+        fi
+        if [[ -s /usr/local/php7.2/sbin/php-fpm && -s /usr/local/nginx/conf/enable-php7.2.conf && -s /etc/init.d/php-fpm7.2 ]]; then
+            Echo_Green "9: PHP 7.2 [found]"
+        fi
+        Echo_Yellow "Enter your choice (1, 2, 3, 4, 5, 6 ,7, 8 or 9): "
+        read php_select
+        case "${php_select}" in
+            1)
+                echo "Current selection: PHP ${Cur_PHP_Version}"
+                if [ "${enable_pathinfo}" == "y" ]; then
+                    include_enable_php="include enable-php-pathinfo.conf;"
+                else
+                    include_enable_php="include enable-php.conf;"
+                fi
+                ;;
+            2)
+                echo "Current selection: PHP `/usr/local/php5.2/bin/php-config --version`"
+                if [ "${enable_pathinfo}" == "y" ]; then
+                    include_enable_php="include enable-php5.2-pathinfo.conf;"
+                    if [ ! -s /usr/local/nginx/conf/enable-php5.2-pathinfo.conf ]; then
+                        \cp /usr/local/nginx/conf/enable-php-pathinfo.conf /usr/local/nginx/conf/enable-php5.2-pathinfo.conf
+                        sed -i 's/php-cgi.sock/php-cgi5.2.sock/g' /usr/local/nginx/conf/enable-php5.2-pathinfo.conf
+                    fi
+                else
+                    include_enable_php="include enable-php5.2.conf;"
+                fi
+                ;;
+            3)
+                echo "Current selection: PHP `/usr/local/php5.3/bin/php-config --version`"
+                if [ "${enable_pathinfo}" == "y" ]; then
+                    include_enable_php="include enable-php5.3-pathinfo.conf;"
+                    if [ ! -s /usr/local/nginx/conf/enable-php5.3-pathinfo.conf ]; then
+                        \cp /usr/local/nginx/conf/enable-php-pathinfo.conf /usr/local/nginx/conf/enable-php5.3-pathinfo.conf
+                        sed -i 's/php-cgi.sock/php-cgi5.3.sock/g' /usr/local/nginx/conf/enable-php5.3-pathinfo.conf
+                    fi
+                else
+                    include_enable_php="include enable-php5.3.conf;"
+                fi
+                ;;
+            4)
+                echo "Current selection: PHP `/usr/local/php5.4/bin/php-config --version`"
+                if [ "${enable_pathinfo}" == "y" ]; then
+                    include_enable_php="include enable-php5.4-pathinfo.conf;"
+                    if [ ! -s /usr/local/nginx/conf/enable-php5.4-pathinfo.conf ]; then
+                        \cp /usr/local/nginx/conf/enable-php-pathinfo.conf /usr/local/nginx/conf/enable-php5.4-pathinfo.conf
+                        sed -i 's/php-cgi.sock/php-cgi5.4.sock/g' /usr/local/nginx/conf/enable-php5.4-pathinfo.conf
+                    fi
+                else
+                    include_enable_php="include enable-php5.4.conf;"
+                fi
+                ;;
+            5)
+                echo "Current selection: PHP `/usr/local/php5.5/bin/php-config --version`"
+                if [ "${enable_pathinfo}" == "y" ]; then
+                    include_enable_php="include enable-php5.5-pathinfo.conf;"
+                    if [ ! -s /usr/local/nginx/conf/enable-php5.5-pathinfo.conf ]; then
+                        \cp /usr/local/nginx/conf/enable-php-pathinfo.conf /usr/local/nginx/conf/enable-php5.5-pathinfo.conf
+                        sed -i 's/php-cgi.sock/php-cgi5.5.sock/g' /usr/local/nginx/conf/enable-php5.5-pathinfo.conf
+                    fi
+                else
+                    include_enable_php="include enable-php5.5.conf;"
+                fi
+                ;;
+            6)
+                echo "Current selection: PHP `/usr/local/php5.6/bin/php-config --version`"
+                if [ "${enable_pathinfo}" == "y" ]; then
+                    include_enable_php="include enable-php5.6-pathinfo.conf;"
+                    if [ ! -s /usr/local/nginx/conf/enable-php5.6-pathinfo.conf ]; then
+                        \cp /usr/local/nginx/conf/enable-php-pathinfo.conf /usr/local/nginx/conf/enable-php5.6-pathinfo.conf
+                        sed -i 's/php-cgi.sock/php-cgi5.6.sock/g' /usr/local/nginx/conf/enable-php5.6-pathinfo.conf
+                    fi
+                else
+                    include_enable_php="include enable-php5.6.conf;"
+                fi
+                ;;
+            7)
+                echo "Current selection:: PHP `/usr/local/php7.0/bin/php-config --version`"
+                if [ "${enable_pathinfo}" == "y" ]; then
+                    include_enable_php="include enable-php7.0-pathinfo.conf;"
+                    if [ ! -s /usr/local/nginx/conf/enable-php7.0-pathinfo.conf ]; then
+                        \cp /usr/local/nginx/conf/enable-php-pathinfo.conf /usr/local/nginx/conf/enable-php7.0-pathinfo.conf
+                        sed -i 's/php-cgi.sock/php-cgi7.0.sock/g' /usr/local/nginx/conf/enable-php7.0-pathinfo.conf
+                    fi
+                else
+                    include_enable_php="include enable-php7.0.conf;"
+                fi
+                ;;
+            8)
+                echo "Current selection:: PHP `/usr/local/php7.1/bin/php-config --version`"
+                if [ "${enable_pathinfo}" == "y" ]; then
+                    include_enable_php="include enable-php7.1-pathinfo.conf;"
+                    if [ ! -s /usr/local/nginx/conf/enable-php7.1-pathinfo.conf ]; then
+                        \cp /usr/local/nginx/conf/enable-php-pathinfo.conf /usr/local/nginx/conf/enable-php7.1-pathinfo.conf
+                        sed -i 's/php-cgi.sock/php-cgi7.1.sock/g' /usr/local/nginx/conf/enable-php7.1-pathinfo.conf
+                    fi
+                else
+                    include_enable_php="include enable-php7.1.conf;"
+                fi
+                ;;
+            9)
+                echo "Current selection:: PHP `/usr/local/php7.2/bin/php-config --version`"
+                if [ "${enable_pathinfo}" == "y" ]; then
+                    include_enable_php="include enable-php7.2-pathinfo.conf;"
+                    if [ ! -s /usr/local/nginx/conf/enable-php7.2-pathinfo.conf ]; then
+                        \cp /usr/local/nginx/conf/enable-php-pathinfo.conf /usr/local/nginx/conf/enable-php7.2-pathinfo.conf
+                        sed -i 's/php-cgi.sock/php-cgi7.2.sock/g' /usr/local/nginx/conf/enable-php7.2-pathinfo.conf
+                    fi
+                else
+                    include_enable_php="include enable-php7.2.conf;"
+                fi
+                ;;
+            *)
+                echo "Default,Current selection: PHP ${Cur_PHP_Version}"
+                php_select="1"
+                if [ "${enable_pathinfo}" == "y" ]; then
+                    include_enable_php="include enable-php-pathinfo.conf;"
+                else
+                    include_enable_php="include enable-php.conf;"
+                fi
+                ;;
+        esac
+    fi
+}
+
+Add_VHost()
+{
+    domain=""
+    while :;do
+        Echo_Yellow "Please enter domain(example: www.lnmp.org): "
+        read domain
+        if [ "${domain}" != "" ]; then
+            if [ -f "/usr/local/nginx/conf/vhost/${domain}.conf" ]; then
+                Echo_Red " ${domain} is exist,please check!"
+                exit 1
+            else
+                echo " Your domain: ${domain}"
+            fi
+            break
+        else
+            Echo_Red "Domain name can't be empty!"
+        fi
+    done
+
+    Echo_Yellow "Enter more domain name(example: lnmp.org *.lnmp.org): "
+    read moredomain
+    if [ "${moredomain}" != "" ]; then
+        echo " domain list: ${moredomain}"
+    fi
+
+    vhostdir="/home/wwwroot/${domain}"
+    echo "Please enter the directory for the domain: $domain"
+    Echo_Yellow "Default directory: /home/wwwroot/${domain}: "
+    read vhostdir
+    if [ "${vhostdir}" == "" ]; then
+        vhostdir="/home/wwwroot/${domain}"
+    fi
+    echo "Virtual Host Directory: ${vhostdir}"
+
+    Echo_Yellow "Allow Rewrite rule? (y/n) "
+    read allow_rewrite
+    if [[ "${allow_rewrite}" == "n" || "${allow_rewrite}" == "" ]]; then
+        rewrite="none"
+    elif [ "${allow_rewrite}" == "y" ]; then
+        rewrite="other"
+        echo "Please enter the rewrite of programme, "
+        echo "wordpress,discuzx,typecho,thinkphp,laravel,codeigniter,yii2 rewrite was exist."
+        Echo_Yellow "(Default rewrite: other): "
+        read rewrite
+        if [ "${rewrite}" == "" ]; then
+            rewrite="other"
+        fi
+    fi
+    echo "You choose rewrite: ${rewrite}"
+
+    Echo_Yellow "Enable PHP Pathinfo? (y/n) "
+    read enable_pathinfo
+    if [[ "${enable_pathinfo}" == "n" || "${enable_pathinfo}" == "" ]]; then
+        echo "Disable pathinfo."
+        enable_pathinfo="n"
+    elif [ "${enable_pathinfo}" == "y" ]; then
+        echo "Enable pathinfo."
+        enable_pathinfo="y"
+    fi
+
+    Echo_Yellow "Allow access log? (y/n) "
+    read access_log
+    if [[ "${access_log}" == "n" || "${access_log}" == "" ]]; then
+        echo "Disable access log."
+        al="access_log off;"
+    else
+        Echo_Yellow "Enter access log filename(Default:${domain}.log): "
+        read al_name
+        if [ "${al_name}" == "" ]; then
+            al_name="${domain}"
+        fi
+        al="access_log  /home/wwwlogs/${al_name}.log;"
+        echo "You access log filename: ${al_name}.log"
+    fi
+
+    Multiple_PHP_Select
+
+    if [[ -s /usr/local/mysql/bin/mysql || -s /usr/local/mariadb/bin/mysql ]]; then
+        Echo_Yellow "Create database and MySQL user with same name (y/n) "
+        read create_database
+
+        if [ "${create_database}" == "y" ]; then
+            Verify_DB_Password
+            Add_Database_Menu
+        fi
+    fi
+
+    if [ -s /usr/local/pureftpd/sbin/pure-ftpd ]; then
+        Echo_Yellow "Create ftp account (y/n) "
+        read create_ftp
+
+        if [ "${create_ftp}" == "y" ]; then
+            Add_Ftp_Menu
+        fi
+    fi
+
+    Echo_Yellow "Add SSL Certificate (y/n) "
+    read create_ssl
+    if [ "${create_ssl}" == "y" ]; then
+        Add_SSL_Menu
+    fi
+
+    echo ""
+    echo "Press any key to start create virtul host..."
+    OLDCONFIG=`stty -g`
+    stty -icanon -echo min 1 time 0
+    dd count=1 2>/dev/null
+    stty ${OLDCONFIG}
+
+    echo "Create Virtul Host directory......"
+    mkdir -p ${vhostdir}
+    if [ "${access_log}" == "y" ]; then
+        touch /home/wwwlogs/${al_name}.log
+    fi
+    echo "set permissions of Virtual Host directory......"
+    chmod -R 755 ${vhostdir}
+    chown -R www:www ${vhostdir}
+
+    Add_VHost_Config
+
+    cat >${vhostdir}/.user.ini<<EOF
+open_basedir=${vhostdir}:/tmp/:/proc/
+EOF
+    chmod 644 ${vhostdir}/.user.ini
+    chattr +i ${vhostdir}/.user.ini
+
+    /etc/init.d/php-fpm restart
+
+    if [ "${create_database}" == "y" ]; then
+        Add_Database
+    fi
+
+    if [ "${create_ftp}" == "y" ]; then
+        Add_Ftp
+    fi
+
+    if [ "${create_ssl}" == "y" ]; then
+        Add_SSL
+    fi
+
+    Echo_Green "================================================"
+    echo "Virtualhost infomation:"
+    echo "Your domain: ${domain}"
+    echo "Home Directory: ${vhostdir}"
+    echo "Rewrite: ${rewrite}"
+    if [ "${access_log}" == "n" ]; then
+        echo "Enable log: no"
+    else
+        echo "Enable log: yes"
+    fi
+    if [ "${create_database}" == "y" ]; then
+        echo "Database username: ${database_name}"
+        echo "Database userpassword: ${mysql_password}"
+        echo "Database Name: ${database_name}"
+    else
+        echo "Create database: no"
+    fi
+    if [ "${create_ftp}" == "y" ]; then
+        echo "FTP account name: ${ftp_account_name}"
+        echo "FTP account password: ${ftp_account_password}"
+    else
+        echo "Create ftp account: no"
+    fi
+    if [ "${create_ssl}" == "y" ]; then
+        echo "Enable SSL: yes"
+        if [ "${ssl_choice}" == "1" ]; then
+            echo "  =>Certificate file"
+        elif [ "${ssl_choice}" == "2" ]; then
+            echo "  =>Let's Encrypt"
+        fi
+    fi
+    Echo_Green "================================================"
+}
+
+List_VHost()
+{
+    echo "Nginx Virtualhost list:"
+    ls /usr/local/nginx/conf/vhost/ | grep ".conf$" | sed 's/.conf//g'
+}
+
+Del_VHost()
+{
+    echo "======================================="
+    echo "Current Virtualhost:"
+    List_VHost
+    echo "======================================="
+    domain=""
+    while :;do
+        Echo_Yellow "Please enter domain you want to delete: "
+        read domain
+        if [ "${domain}" == "" ]; then
+            Echo_Red "Domain name can't be empty."
+        else
+            break
+        fi
+    done
+    if [ ! -f "/usr/local/nginx/conf/vhost/${domain}.conf" ]; then
+        echo "=========================================="
+        echo "Domain: ${domain} was not exist!"
+        echo "=========================================="
+        exit 1
+    else
+        if [ -f "${vhostdir}/.user.ini" ]; then
+            chattr -i "${vhostdir}/.user.ini"
+            rm -f "${vhostdir}/.user.ini"
+        fi
+        rm -f /usr/local/nginx/conf/vhost/${domain}.conf
+        echo "========================================================"
+        echo "Domain: ${domain} has been deleted."
+        echo "Website files will not be deleted for security reasons."
+        echo "You need to manually delete the website files."
+        echo "========================================================"
+    fi
+}
+
+Check_DB()
+{
+    if [[ -s /usr/local/mariadb/bin/mysql && -s /usr/local/mariadb/bin/mysqld_safe && -s /etc/my.cnf ]]; then
+        MySQL_Bin="/usr/local/mariadb/bin/mysql"
+        MySQL_Ver=`/usr/local/mariadb/bin/mysql_config --version`
+    elif [[ -s /usr/local/mysql/bin/mysql && -s /usr/local/mysql/bin/mysqld_safe && -s /etc/my.cnf ]]; then
+        MySQL_Bin="/usr/local/mysql/bin/mysql"
+        MySQL_Ver=`/usr/local/mysql/bin/mysql_config --version`
+    else
+        MySQL_Bin="None"
+    fi
+}
+
+Make_TempMycnf()
+{
+    cat >~/.my.cnf<<EOF
+[client]
+user=root
+password='$1'
+EOF
+    chmod 600 ~/.my.cnf
+}
+
+Verify_DB_Password()
+{
+    Check_DB
+    status=1
+    while [ $status -eq 1 ]; do
+        Echo_Yellow "Enter current root password of Database (Password will not shown): "
+        read -s DB_Root_Password
+        echo
+        Make_TempMycnf "${DB_Root_Password}"
+        Do_Query ""
+        status=$?
+    done
+    echo "OK, MySQL root password correct."
+}
+
+Do_Query()
+{
+    echo "$1" >/tmp/.mysql.tmp
+    chmod 600 /tmp/.mysql.tmp
+    Check_DB
+    ${MySQL_Bin} --defaults-file=~/.my.cnf </tmp/.mysql.tmp
+    return $?
+}
+
+TempMycnf_Clean()
+{
+    if [ -s ~/.my.cnf ]; then
+        rm -f ~/.my.cnf
+    fi
+    if [ -s /tmp/.mysql.tmp ]; then
+        rm -f /tmp/.mysql.tmp
+    fi
+}
+
+Enter_Database_Name()
+{
+    while :;do
+        Echo_Yellow "Enter database name: "
+        read database_name
+        if [ "${database_name}" == "" ]; then
+            Echo_Red "Database Name can't be empty!"
+        else
+            break
+        fi
+    done
+}
+
+Add_Database_Menu()
+{
+    Enter_Database_Name
+    echo "Your will create a database and MySQL user with same name: ${database_name}"
+    Echo_Yellow "Please enter password for mysql user ${database_name}: "
+    read mysql_password
+    echo "Your password: ${mysql_password} "
+}
+
+Add_Database()
+{
+    if echo "${MySQL_Ver}" | grep -Eqi '^8.0.';then
+        cat >/tmp/.add_mysql.sql<<EOF
+CREATE USER '${database_name}'@'localhost' IDENTIFIED BY '${mysql_password}';
+CREATE USER '${database_name}'@'127.0.0.1' IDENTIFIED BY '${mysql_password}';
+GRANT USAGE ON *.* TO '${database_name}'@'localhost';
+GRANT USAGE ON *.* TO '${database_name}'@'127.0.0.1';
+CREATE DATABASE IF NOT EXISTS \`${database_name}\`;
+GRANT ALL PRIVILEGES ON \`${database_name}\`.* TO '${database_name}'@'localhost';
+GRANT ALL PRIVILEGES ON \`${database_name}\`.* TO '${database_name}'@'127.0.0.1';
+FLUSH PRIVILEGES;
+EOF
+
+    else
+        cat >/tmp/.add_mysql.sql<<EOF
+CREATE USER '${database_name}'@'localhost' IDENTIFIED BY '${mysql_password}';
+CREATE USER '${database_name}'@'127.0.0.1' IDENTIFIED BY '${mysql_password}';
+GRANT USAGE ON *.* TO '${database_name}'@'localhost' IDENTIFIED BY '${mysql_password}';
+GRANT USAGE ON *.* TO '${database_name}'@'127.0.0.1' IDENTIFIED BY '${mysql_password}';
+CREATE DATABASE IF NOT EXISTS \`${database_name}\`;
+GRANT ALL PRIVILEGES ON \`${database_name}\`.* TO '${database_name}'@'localhost';
+GRANT ALL PRIVILEGES ON \`${database_name}\`.* TO '${database_name}'@'127.0.0.1';
+FLUSH PRIVILEGES;
+EOF
+
+    fi
+    ${MySQL_Bin} --defaults-file=~/.my.cnf < /tmp/.add_mysql.sql
+    [ $? -eq 0 ] && echo "Add database Sucessfully." || echo "Add database failed!"
+    rm -f /tmp/.add_mysql.sql
+}
+
+List_Database()
+{
+    ${MySQL_Bin} --defaults-file=~/.my.cnf -e "SHOW DATABASES;"
+    [ $? -eq 0 ] && echo "List all databases Sucessfully." || echo "List all databases failed!"
+}
+
+Edit_Database()
+{
+    while :;do
+        Echo_Yellow "Enter database username: "
+        read database_username
+        if [ "${database_username}" == "" ]; then
+            Echo_Red "Database Username can't be empty!"
+        else
+            break
+        fi
+    done
+    while :;do
+        Echo_Yellow "Enter NEW Password: "
+        read database_username_passwd
+        if [ "${database_username_passwd}" == "" ]; then
+            Echo_Red "Database Password can't be empty!"
+        else
+            break
+        fi
+    done
+
+    if echo "${MySQL_Ver}" | grep -Eqi '^5.7.';then
+        Do_Query "UPDATE mysql.user SET authentication_string=PASSWORD('${database_username_passwd}') WHERE User='${database_username}' AND Host IN ('localhost', '127.0.0.1', '::1');"
+    elif echo "${MySQL_Ver}" | grep -Eqi '^8.0.';then
+        Do_Query "SET PASSWORD FOR '${database_username}'@'127.0.0.1' = '${database_username_passwd}';"
+        Do_Query "SET PASSWORD FOR '${database_username}'@'localhost' = '${database_username_passwd}';"
+    else
+        Do_Query "UPDATE mysql.user SET Password=PASSWORD('${database_username_passwd}') WHERE User='${database_username}' AND Host IN ('localhost', '127.0.0.1', '::1');"
+    fi
+    [ $? -eq 0 ] && echo "Edit user password Sucessfully." || echo "Edit user password databases failed!"
+    Do_Query "FLUSH PRIVILEGES;"
+}
+
+Del_Database()
+{
+    List_Database
+    Enter_Database_Name
+    if [[ "${database_name}" == "information_schema" || "${database_name}" == "mysql" || "${database_name}" == "performance_schema" ]]; then
+        echo "MySQL System Database can't be delete!"
+        exit 1
+    fi
+    echo "Your will delete database and MySQL user with same name: ${database_name}"
+    echo "Sleep 10s, Press ctrl+c to cancel..."
+    Sleep_Sec 10
+    cat >/tmp/.del.mysql.sql<<EOF
+DROP USER '${database_name}'@'127.0.0.1';
+DROP USER '${database_name}'@'localhost';
+DROP DATABASE \`${database_name}\`;
+FLUSH PRIVILEGES;
+EOF
+    ${MySQL_Bin} --defaults-file=~/.my.cnf < /tmp/.del.mysql.sql
+    [ $? -eq 0 ] && echo "Delete database: ${database_name} Sucessfully." || echo "Delete database: ${database_name} failed!"
+    rm -f /tmp/.del.mysql.sql
+}
+
+Enter_Ftp_Name()
+{
+    while :;do
+        Echo_Yellow "Enter ftp account name: "
+        read ftp_account_name
+        if [ "${ftp_account_name}" == "" ]; then
+            Echo_Red "FTP account name can't be empty!"
+        else
+            break
+        fi
+    done
+}
+
+Add_Ftp_Menu()
+{
+    Enter_Ftp_Name
+    while :;do
+        Echo_Yellow "Enter password for ftp account ${ftp_account_name}: "
+        read ftp_account_password
+        if [ "${ftp_account_password}" == "" ]; then
+            Echo_Red "FTP password can't be empty!"
+        else
+            break
+        fi
+    done
+    if [ "${vhostdir}" == "" ]; then
+        while :;do
+            Echo_Yellow "Enter directory for ftp account ${ftp_account_name}: "
+            read vhostdir
+            if [ "${vhostdir}" == "" ]; then
+                Echo_Red "Directory can't be empty!"
+            else
+                break
+            fi
+        done
+    fi
+}
+
+Check_Pureftpd()
+{
+    if [ ! -f /usr/local/pureftpd/sbin/pure-ftpd ]; then
+        Echo_Red "Pureftpd was not installed!"
+        exit 1
+    fi
+}
+
+Add_Ftp()
+{
+    www_uid=`id -u www`
+    www_gid=`id -g www`
+    cat >/tmp/pass${ftp_account_name}<<EOF
+${ftp_account_password}
+${ftp_account_password}
+EOF
+    /usr/local/pureftpd/bin/pure-pw useradd ${ftp_account_name} -f /usr/local/pureftpd/etc/pureftpd.passwd -u ${www_uid} -g ${www_gid} -d ${vhostdir} -m < /tmp/pass${ftp_account_name}
+    [ $? -eq 0 ] && echo "Created FTP User: ${ftp_account_name} Sucessfully." || echo "FTP User: ${ftp_account_name} already exists!"
+    rm -f /tmp/pass${ftp_account_name}
+}
+
+List_Ftp()
+{
+    /usr/local/pureftpd/bin/pure-pw list -f /usr/local/pureftpd/etc/pureftpd.passwd
+    [ $? -eq 0 ] && echo "List FTP User Sucessfully." || echo "Read database failed."
+}
+
+Edit_Ftp()
+{
+    List_Ftp
+    Enter_Ftp_Name
+    Echo_Yellow "Enter password for ftp account ${ftp_account_name}: "
+    read ftp_account_password
+    if [ "${ftp_account_password}" != "" ]; then
+        cat >/tmp/pass${ftp_account_name}<<EOF
+${ftp_account_password}
+${ftp_account_password}
+EOF
+        /usr/local/pureftpd/bin/pure-pw passwd ${ftp_account_name} -f /usr/local/pureftpd/etc/pureftpd.passwd -m < /tmp/pass${ftp_account_name}
+        [ $? -eq 0 ] && echo "FTP User: ${ftp_account_name} change password Sucessfully." || echo "FTP User: ${ftp_account_name} change password failed!"
+        rm -f /tmp/pass${ftp_account_name}
+    else
+        echo "FTP password will not change."
+    fi
+    Echo_Yellow "Enter directory for ftp account ${ftp_account_name}: "
+    read vhostdir
+    if [ "${vhostdir}" != "" ]; then
+        www_uid=`id -u www`
+        www_gid=`id -g www`
+        /usr/local/pureftpd/bin/pure-pw usermod ${ftp_account_name} -f /usr/local/pureftpd/etc/pureftpd.passwd -u ${www_uid} -g ${www_gid} -d ${vhostdir} -m
+        [ $? -eq 0 ] && echo "FTP User: ${ftp_account_name} change diretcory Sucessfully." || echo "FTP User: ${ftp_account_name} change directory failed!"
+    else
+        echo "Directory will not change."
+    fi
+}
+
+Del_Ftp()
+{
+    List_Ftp
+    Enter_Ftp_Name
+    echo "Your will delete ftp user ${ftp_account_name}"
+    echo "Sleep 3s,Press ctrl+c to cancel..."
+    Sleep_Sec 3
+    /usr/local/pureftpd/bin/pure-pw userdel ${ftp_account_name} -f /usr/local/pureftpd/etc/pureftpd.passwd -m
+    [ $? -eq 0 ] && echo "FTP User: ${ftp_account_name} deleted Sucessfully." || echo "FTP User: ${ftp_account_name} not exists!"
+}
+
+Show_Ftp()
+{
+    List_Ftp
+    Enter_Ftp_Name
+    echo "Your ftp account ${ftp_account_name} details:"
+    /usr/local/pureftpd/bin/pure-pw show ${ftp_account_name}
+    [ $? -eq 0 ] && echo "Ok." || echo "failed."
+}
+
+Add_SSL_Info_Menu()
+{
+    domain=""
+    while :;do
+        Echo_Yellow "Please enter domain(example: www.lnmp.org): "
+        read domain
+        if [ "${domain}" != "" ]; then
+            echo " Your domain: ${domain}"
+            break
+        else
+            Echo_Red "Domain name can't be empty!"
+        fi
+    done
+
+    Echo_Yellow "Enter more domain name(example: lnmp.org *.lnmp.org): "
+    read moredomain
+    if [ "${moredomain}" != "" ]; then
+        echo " domain list: ${moredomain}"
+    fi
+
+    while :;do
+        Echo_Yellow "Please enter the directory for domain $domain: "
+        read vhostdir
+        if [ "${vhostdir}" == "" ]; then
+            Echo_Red "Directory cannot be empty!"
+        else
+            break
+        fi
+        echo "Virtual Host Directory: ${vhostdir}"
+    done
+
+    Echo_Yellow "Allow Rewrite rule? (y/n) "
+    read allow_rewrite
+    if [[ "${allow_rewrite}" == "n" || "${allow_rewrite}" == "" ]]; then
+        rewrite="none"
+    elif [ "${allow_rewrite}" == "y" ]; then
+        rewrite="other"
+        echo "Please enter the rewrite of programme, "
+        echo "wordpress,discuzx,typecho,thinkphp,laravel,codeigniter,yii2 rewrite was exist."
+        Echo_Yellow "(Default rewrite: other): "
+        read rewrite
+        if [ "${rewrite}" == "" ]; then
+            rewrite="other"
+        fi
+    fi
+    echo "You choose rewrite: ${rewrite}"
+
+    Echo_Yellow "Allow access log? (y/n) "
+    read access_log
+    if [[ "${access_log}" == "n" || "${access_log}" == "" ]]; then
+        echo "Disable access log."
+        al="access_log off;"
+    else
+        Echo_Yellow "Enter access log filename(Default:${domain}.log): "
+        read al_name
+        if [ "${al_name}" == "" ]; then
+            al_name="${domain}"
+        fi
+        al="access_log  /home/wwwlogs/${al_name}.log;"
+        echo "You access log filename: ${al_name}.log"
+    fi
+
+    Echo_Yellow "Enable PHP Pathinfo? (y/n) "
+    read enable_pathinfo
+    if [[ "${enable_pathinfo}" == "n" || "${enable_pathinfo}" == "" ]]; then
+        echo "Disable pathinfo."
+    elif [ "${allow_rewrite}" == "y" ]; then
+        echo "Enable pathinfo."
+        enable_pathinfo="y"
+    fi
+
+    Multiple_PHP_Select
+}
+
+Add_DNS_SSL_Only_Info_Menu()
+{
+    domain=""
+    while :;do
+        Echo_Yellow "Please enter domain(example: lnmp.org): "
+        read domain
+        if [ "${domain}" != "" ]; then
+            echo " Your domain: ${domain}"
+            break
+        else
+            Echo_Red "Domain name can't be empty!"
+        fi
+    done
+
+    Echo_Yellow "Enter more domain name(example: *.lnmp.org): "
+    read moredomain
+    if [ "${moredomain}" != "" ]; then
+        echo " domain list: ${moredomain}"
+    fi
+}
+
+Add_SSL_Menu()
+{
+    if [ "${info}" == "n" ]; then
+        Add_SSL_Info_Menu
+    fi
+    echo "1: Use your own SSL Certificate and Key"
+    echo "2: Use Let's Encrypt to create SSL Certificate and Key"
+    while :;do
+        Echo_Yellow "Enter 1 or 2: "
+        read ssl_choice
+        if [ "${ssl_choice}" == "1" ]; then
+            while :;do
+                Echo_Yellow "Please enter full path to SSL Certificate file: "
+                read ssl_certificate
+                if [ "${ssl_certificate}" == "" ]; then
+                    Echo_Red "SSL Certificate file cannot be empty!"
+                else
+                    break
+                fi
+            done
+            while :;do
+                Echo_Yellow "Please enter full path to SSL Certificate Key file: "
+                read ssl_certificate_key
+                if [ "${ssl_certificate_key}" == "" ]; then
+                    Echo_Red "SSL Certificate Key file cannot be empty!"
+                else
+                    break
+                fi
+            done
+            break
+        elif [ "${ssl_choice}" == "2" ]; then
+            echo "It will be processed automatically."
+            break
+        else
+            Echo_Red "Please Enter 1 or 2!"
+        fi
+    done
+}
+
+Add_Letsencrypt()
+{
+    if [[ "${vhostdir}" == "" || "${letsdomain}" == "" ]]; then
+        Echo_Red "Two parameters are needed!"
+        exit 1
+    fi
+    if [ ! -d "${vhostdir}" ]; then
+        Echo_Red "${vhostdir} does not exist or is not a directory!"
+        exit
+    fi
+    if [ -s /usr/local/acme.sh/acme.sh ]; then
+        echo "/usr/local/acme.sh/acme.sh [found]"
+    else
+        cd /tmp
+        [[ -f latest.tar.gz ]] && rm -f latest.tar.gz
+        wget https://soft.vpser.net/lib/acme.sh/latest.tar.gz --prefer-family=IPv4 --no-check-certificate
+        tar zxf latest.tar.gz
+        cd acme.sh-*
+        ./acme.sh --install --log --home /usr/local/acme.sh --certhome /usr/local/nginx/conf/ssl
+        cd ..
+        rm -f latest.tar.gz
+        rm -rf acme.sh-*
+        sed -i 's/cat "\$CERT_PATH"$/#cat "\$CERT_PATH"/g' /usr/local/acme.sh/acme.sh
+        if [ -f /usr/bin/yum ]; then
+            service crond restart
+        fi
+    fi
+
+    . "/usr/local/acme.sh/acme.sh.env"
+
+    if [ -s /usr/local/nginx/conf/ssl/${domain}/fullchain.cer ]; then
+        echo "Removing exist domain certificate..."
+        rm -rf /usr/local/nginx/conf/ssl/${domain}
+    fi
+
+    echo "Starting create SSL Certificate use Let's Encrypt..."
+    /usr/local/acme.sh/acme.sh --issue ${letsdomain} -w ${vhostdir} --reloadcmd "/etc/init.d/nginx reload"
+    lets_status=$?
+    if [ "${lets_status}" = 0 ]; then
+        Echo_Green "Let's Encrypt SSL Certificate create successfully."
+    else
+        Echo_Red "Let's Encrypt SSL Certificate create failed!"
+    fi
+}
+
+Create_SSL_Config()
+{
+    if [ ! -s /usr/local/nginx/conf/ssl/dhparam.pem ]; then
+        echo "Create dhparam.pem..."
+        mkdir -p /usr/local/nginx/conf/ssl/
+        openssl dhparam -out /usr/local/nginx/conf/ssl/dhparam.pem 2048
+    fi
+
+    cat >>"/usr/local/nginx/conf/vhost/${domain}.conf"<<EOF
+
+server
+    {
+        listen 443 ssl http2;
+        #listen [::]:443 ssl http2;
+        server_name ${domain} ${moredomain};
+        index index.html index.htm index.php default.html default.htm default.php;
+        root  ${vhostdir};
+
+        ssl_certificate ${ssl_certificate};
+        ssl_certificate_key ${ssl_certificate_key};
+        ssl_session_timeout 5m;
+        ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers on;
+        ssl_ciphers "TLS13-AES-256-GCM-SHA384:TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-128-GCM-SHA256:TLS13-AES-128-CCM-8-SHA256:TLS13-AES-128-CCM-SHA256:EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5";
+        ssl_session_cache builtin:1000 shared:SSL:10m;
+        # openssl dhparam -out /usr/local/nginx/conf/ssl/dhparam.pem 2048
+        ssl_dhparam /usr/local/nginx/conf/ssl/dhparam.pem;
+
+        include rewrite/${rewrite}.conf;
+        #error_page   404   /404.html;
+
+        # Deny access to PHP files in specific directory
+        #location ~ /(wp-content|uploads|wp-includes|images)/.*\.php$ { deny all; }
+
+        ${include_enable_php}
+
+        location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+        {
+            expires      30d;
+        }
+
+        location ~ .*\.(js|css)?$
+        {
+            expires      12h;
+        }
+
+        location ~ /.well-known {
+            allow all;
+        }
+
+        location ~ /\.
+        {
+            deny all;
+        }
+
+        ${al}
+    }
+EOF
+
+    echo "Test Nginx configure file......"
+    /usr/local/nginx/sbin/nginx -t
+    echo "Reload Nginx......"
+    /usr/local/nginx/sbin/nginx -s reload
+}
+
+Add_SSL()
+{
+    if [ "${ssl_choice}" == "1" ]; then
+        Create_SSL_Config
+    elif [ "${ssl_choice}" == "2" ]; then
+        letsdomain=""
+        if [ "${moredomain}" != "" ]; then
+            letsdomain="-d ${domain}"
+            for i in ${moredomain};do
+                letsdomain=${letsdomain}" -d ${i}"
+            done
+        else
+            letsdomain="-d ${domain}"
+        fi
+        if [ ! -s "/usr/local/nginx/conf/vhost/${domain}.conf" ]; then
+            Add_VHost_Config
+        fi
+        if [ ! -d "${vhostdir}" ]; then
+            mkdir -p "${vhostdir}"
+        fi
+        Add_Letsencrypt
+        ssl_certificate="/usr/local/nginx/conf/ssl/${domain}/fullchain.cer"
+        ssl_certificate_key="/usr/local/nginx/conf/ssl/${domain}/${domain}.key"
+        if [ "${lets_status}" = 0 ]; then
+            Create_SSL_Config
+        fi
+    fi
+}
+
+Add_Dns_SSL()
+{
+    provider=$1
+    if [ "${provider}" != "" ]; then
+        dns_provider="dns_${provider}"
+    else
+        Echo_Red "The dns manual mode can not renew automatically, you must renew it manually."
+    fi
+    if [ -s /usr/local/acme.sh/acme.sh ]; then
+        echo "/usr/local/acme.sh/acme.sh [found]"
+    else
+        cd /tmp
+        [[ -f latest.tar.gz ]] && rm -f latest.tar.gz
+        wget https://soft.vpser.net/lib/acme.sh/latest.tar.gz --prefer-family=IPv4 --no-check-certificate
+        tar zxf latest.tar.gz
+        cd acme.sh-*
+        ./acme.sh --install --log --home /usr/local/acme.sh --certhome /usr/local/nginx/conf/ssl
+        cd ..
+        rm -f latest.tar.gz
+        rm -rf acme.sh-*
+        sed -i 's/cat "\$CERT_PATH"$/#cat "\$CERT_PATH"/g' /usr/local/acme.sh/acme.sh
+        if [ -f /usr/bin/yum ]; then
+            service crond restart
+        fi
+    fi
+    if [[ ! -s /usr/local/acme.sh/dnsapi/dns_${provider}.sh && "${provider}" != "" ]]; then
+        echo "DNS Provider: ${provider} not found."
+        exit 1
+    fi
+    Add_SSL_Info_Menu
+
+    . "/usr/local/acme.sh/acme.sh.env"
+
+    if [ -s /usr/local/nginx/conf/ssl/${domain}/fullchain.cer ]; then
+        echo "Removing exist domain certificate..."
+        rm -rf /usr/local/nginx/conf/ssl/${domain}
+    fi
+
+    letsdomain=""
+    if [ "${moredomain}" != "" ]; then
+        letsdomain="-d ${domain}"
+        for i in ${moredomain};do
+            letsdomain=${letsdomain}" -d ${i}"
+        done
+    else
+        letsdomain="-d ${domain}"
+    fi
+
+    if echo "${letsdomain}" | grep -q '\*\.' && echo "${letsdomain}" | grep -qi 'www\.'; then
+        Echo_Red "wildcard SSL certificate DO NOT allow add www. subdomain."
+        exit 1
+    fi
+
+    echo "Starting create SSL Certificate use Let's Encrypt..."
+    if [ "${provider}" != "" ]; then
+        /usr/local/acme.sh/acme.sh --issue ${letsdomain} --dns ${dns_provider} --reloadcmd "/etc/init.d/nginx reload"
+        lets_status=$?
+    else
+        /usr/local/acme.sh/acme.sh --issue ${letsdomain} --dns --yes-I-know-dns-manual-mode-enough-go-ahead-please
+        Echo_Yellow "Please add the above TXT record to the domain in 120 seconds!!!"
+        echo
+        Sleep_Sec 120
+        /usr/local/acme.sh/acme.sh --renew ${letsdomain} --yes-I-know-dns-manual-mode-enough-go-ahead-please
+        lets_status=$?
+    fi
+    if [ "${lets_status}" = 0 ] || [[ "${provider}" = "" && "${lets_status}" = 1 && -s "/usr/local/nginx/conf/ssl/${domain}/fullchain.cer" ]]; then
+        if [ ! -d "${vhostdir}" ]; then
+            echo "Create Virtul Host directory......"
+            mkdir -p ${vhostdir}
+            echo "set permissions of Virtual Host directory......"
+            chmod -R 755 ${vhostdir}
+            chown -R www:www ${vhostdir}
+        fi
+
+        if [ ! -s "/usr/local/nginx/conf/vhost/${domain}.conf" ]; then
+            Add_VHost_Config
+        fi
+        ssl_certificate="/usr/local/nginx/conf/ssl/${domain}/fullchain.cer"
+        ssl_certificate_key="/usr/local/nginx/conf/ssl/${domain}/${domain}.key"
+        Create_SSL_Config
+        Echo_Green "Let's Encrypt SSL Certificate create successfully."
+    else
+        Echo_Red "Let's Encrypt SSL Certificate create failed!"
+    fi
+}
+
+Add_Dns_SSL_Only()
+{
+    provider=$1
+    if [ "${provider}" != "" ]; then
+        dns_provider="dns_${provider}"
+    else
+        Echo_Red "The dns manual mode can not renew automatically, you must renew it manually."
+    fi
+    if [ -s /usr/local/acme.sh/acme.sh ]; then
+        echo "/usr/local/acme.sh/acme.sh [found]"
+    else
+        cd /tmp
+        [[ -f latest.tar.gz ]] && rm -f latest.tar.gz
+        wget https://soft.vpser.net/lib/acme.sh/latest.tar.gz --prefer-family=IPv4 --no-check-certificate
+        tar zxf latest.tar.gz
+        cd acme.sh-*
+        ./acme.sh --install --log --home /usr/local/acme.sh --certhome /usr/local/nginx/conf/ssl
+        cd ..
+        rm -f latest.tar.gz
+        rm -rf acme.sh-*
+        sed -i 's/cat "\$CERT_PATH"$/#cat "\$CERT_PATH"/g' /usr/local/acme.sh/acme.sh
+        if [ -f /usr/bin/yum ]; then
+            service crond restart
+        fi
+    fi
+    if [[ ! -s /usr/local/acme.sh/dnsapi/dns_${provider}.sh && "${provider}" != "" ]]; then
+        echo "DNS Provider: ${provider} not found."
+        exit 1
+    fi
+    Add_DNS_SSL_Only_Info_Menu
+
+    . "/usr/local/acme.sh/acme.sh.env"
+
+    if [ -s /usr/local/nginx/conf/ssl/${domain}/fullchain.cer ]; then
+        echo "Removing exist domain certificate..."
+        rm -rf /usr/local/nginx/conf/ssl/${domain}
+    fi
+
+    letsdomain=""
+    if [ "${moredomain}" != "" ]; then
+        letsdomain="-d ${domain}"
+        for i in ${moredomain};do
+            letsdomain=${letsdomain}" -d ${i}"
+        done
+    else
+        letsdomain="-d ${domain}"
+    fi
+
+    if echo "${letsdomain}" | grep -q '\*\.' && echo "${letsdomain}" | grep -qi 'www\.'; then
+        Echo_Red "wildcard SSL certificate DO NOT allow add www. subdomain."
+        exit 1
+    fi
+
+    echo "Starting create SSL Certificate use Let's Encrypt..."
+    if [ "${provider}" != "" ]; then
+        /usr/local/acme.sh/acme.sh --issue ${letsdomain} --dns ${dns_provider} --reloadcmd "/etc/init.d/nginx reload"
+        lets_status=$?
+    else
+        /usr/local/acme.sh/acme.sh --issue ${letsdomain} --dns --yes-I-know-dns-manual-mode-enough-go-ahead-please
+        Echo_Yellow "Please add the above TXT record to the domain in 120 seconds!!!"
+        echo
+        Sleep_Sec 120
+        /usr/local/acme.sh/acme.sh --renew ${letsdomain} --yes-I-know-dns-manual-mode-enough-go-ahead-please
+        lets_status=$?
+    fi
+    if [ "${lets_status}" = 0 ] || [[ "${provider}" = "" && "${lets_status}" = 1 && -s "/usr/local/nginx/conf/ssl/${domain}/fullchain.cer" ]]; then
+        Echo_Blue "------------------ SSL Certificate information as follows ------------------"
+        Echo_Blue "| Domain: ${domain} ${moredomain}"
+        Echo_Blue "| SSL Certificate: /usr/local/nginx/conf/ssl/${domain}/fullchain.cer"
+        Echo_Blue "| SSL Certificate Key: /usr/local/nginx/conf/ssl/${domain}/${domain}.key"
+        Echo_Blue "------------------------------------ ---------------------------------------"
+        Echo_Green "Let's Encrypt SSL Certificate create successfully."
+    else
+        Echo_Red "Let's Encrypt SSL Certificate create failed!"
+    fi
+}
+
+Color_Text()
+{
+  echo -e " \e[0;$2m$1\e[0m"
+}
+
+Echo_Red()
+{
+  echo $(Color_Text "$1" "31")
+}
+
+Echo_Green()
+{
+  echo $(Color_Text "$1" "32")
+}
+
+Echo_Yellow()
+{
+  echo -n $(Color_Text "$1" "33")
+}
+
+Echo_Blue()
+{
+  echo $(Color_Text "$1" "34")
+}
+
+Sleep_Sec()
+{
+    seconds=$1
+    while [ "${seconds}" -ge "0" ];do
+      echo -ne "\r     \r"
+      echo -n ${seconds}
+      seconds=$(($seconds - 1))
+      sleep 1
+    done
+    echo -ne "\r"
+}
+
+Check_DB
+
+case "${arg1}" in
+    start)
+        lnmp_start
+        ;;
+    stop)
+        lnmp_stop
+        ;;
+    restart)
+        lnmp_stop
+        lnmp_start
+        ;;
+    reload)
+        lnmp_reload
+        ;;
+    kill)
+        lnmp_kill
+        ;;
+    status)
+        lnmp_status
+        ;;
+    nginx)
+        /etc/init.d/nginx ${arg2}
+        ;;
+    mysql)
+        /etc/init.d/mysql ${arg2}
+        ;;
+    mariadb)
+        /etc/init.d/mariadb ${arg2}
+        ;;
+    php-fpm)
+        /etc/init.d/php-fpm ${arg2}
+        ;;
+    pureftpd)
+        /etc/init.d/pureftpd ${arg2}
+        ;;
+    httpd)
+        /etc/init.d/httpd ${arg2}
+        ;;
+    vhost)
+        Function_Vhost ${arg2}
+        ;;
+    database)
+        Verify_DB_Password
+        Function_Database ${arg2}
+        TempMycnf_Clean
+        ;;
+    ftp)
+        Check_Pureftpd
+        Function_Ftp ${arg2}
+        ;;
+    ssl)
+        info="n"
+        Add_SSL_Menu
+        Add_SSL
+        ;;
+    dnsssl|dns)
+        Add_Dns_SSL ${arg2}
+        ;;
+    onlyssl)
+        Add_Dns_SSL_Only ${arg2}
+        ;;
+    *)
+        echo "Usage: lnmp {start|stop|reload|restart|kill|status}"
+        echo "Usage: lnmp {nginx|mysql|mariadb|php-fpm|pureftpd} {start|stop|reload|restart|kill|status}"
+        echo "Usage: lnmp vhost {add|list|del}"
+        echo "Usage: lnmp database {add|list|edit|del}"
+        echo "Usage: lnmp ftp {add|list|edit|del|show}"
+        echo "Usage: lnmp ssl add"
+        echo "Usage: lnmp {dnsssl|dns} {cx|ali|cf|dp|he|gd|aws}"
+        ;;
+esac
+exit

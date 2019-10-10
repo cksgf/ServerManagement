@@ -1,0 +1,14 @@
+diff -ruN a/src/os/unix/ngx_user.c b/src/os/unix/ngx_user.c
+--- a/src/os/unix/ngx_user.c	2018-04-17 23:22:37.000000000 +0800
++++ b/src/os/unix/ngx_user.c	2018-05-27 21:05:41.641457261 +0800
+@@ -21,10 +21,6 @@
+     struct crypt_data   cd;
+ 
+     cd.initialized = 0;
+-#ifdef __GLIBC__
+-    /* work around the glibc bug */
+-    cd.current_salt[0] = ~salt[0];
+-#endif
+ 
+     value = crypt_r((char *) key, (char *) salt, &cd);
+ 

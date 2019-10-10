@@ -1,0 +1,42 @@
+diff -ruN mysql-5.1.73.org/client/mysql.cc mysql-5.1.73/client/mysql.cc
+--- mysql-5.1.73.org/client/mysql.cc	2013-11-05 02:52:27.000000000 +0800
++++ mysql-5.1.73/client/mysql.cc	2018-01-18 20:40:50.776344273 +0800
+@@ -2684,7 +2684,7 @@
+         mysql_free_result(fields);
+         break;
+       }
+-      field_names[i][num_fields*2]= '\0';
++      field_names[i][num_fields*2]= NULL;
+       j=0;
+       while ((sql_field=mysql_fetch_field(fields)))
+       {
+diff -ruN mysql-5.1.73.org/server-tools/instance-manager/instance_map.cc mysql-5.1.73/server-tools/instance-manager/instance_map.cc
+--- mysql-5.1.73.org/server-tools/instance-manager/instance_map.cc	2013-11-05 02:52:27.000000000 +0800
++++ mysql-5.1.73/server-tools/instance-manager/instance_map.cc	2018-01-18 20:42:05.773394569 +0800
+@@ -526,12 +526,12 @@
+              Options::Main::config_file);
+ 
+     argv_options[1]= defaults_file_arg;
+-    argv_options[2]= '\0';
++    argv_options[2]= NULL;
+ 
+     argc= 2;
+   }
+   else
+-    argv_options[1]= '\0';
++    argv_options[1]= NULL;
+ 
+   /*
+     If the routine failed, we'll simply fallback to defaults in
+diff -ruN mysql-5.1.73.org/server-tools/instance-manager/protocol.cc mysql-5.1.73/server-tools/instance-manager/protocol.cc
+--- mysql-5.1.73.org/server-tools/instance-manager/protocol.cc	2013-11-05 02:52:27.000000000 +0800
++++ mysql-5.1.73/server-tools/instance-manager/protocol.cc	2018-01-18 20:43:34.219453879 +0800
+@@ -24,7 +24,7 @@
+ #include <m_string.h>
+ 
+ 
+-static uchar eof_buff[1]= { (char) 254 }; /* Marker for end of fields */
++static uchar eof_buff[1]= { (uchar) 254 }; /* Marker for end of fields */
+ static const char ERROR_PACKET_CODE= (char) 255;
+ 
+ 

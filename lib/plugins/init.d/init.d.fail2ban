@@ -1,0 +1,106 @@
+#! /bin/sh
+#
+# chkconfig: 2345 55 25
+# processname: fail2ban-server
+# config: /etc/fail2ban/fail2ban.conf
+# pidfile: /var/run/fail2ban/fail2ban.pid
+# description: fail2ban is a daemon to ban hosts that cause multiple authentication errors
+#
+### BEGIN INIT INFO
+# Provides:          fail2ban
+# Required-Start:    $local_fs $remote_fs
+# Required-Stop:     $local_fs $remote_fs
+# Should-Start:      $time $network $syslog $named iptables firehol shorewall ipmasq arno-iptables-firewall iptables-persistent ferm ufw
+# Should-Stop:       $network $syslog $named iptables firehol shorewall ipmasq arno-iptables-firewall iptables-persistent ferm ufw
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start/stop fail2ban
+# Description:       Start/stop fail2ban, a daemon scanning the log files and
+#                    banning potential attackers.
+### END INIT INFO
+
+# Author:   licess
+# website:  https://lnmp.org
+
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+NAME=fail2ban
+
+# fail2ban-client is not a daemon itself but starts a daemon and
+# loads its with configuration
+DAEMON=/usr/bin/$NAME-client
+SCRIPTNAME=/etc/init.d/$NAME
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+do_start()
+{
+	# Assure that /var/run/fail2ban exists
+    [ -d /var/run/fail2ban ] || mkdir -p /var/run/fail2ban
+
+    echo -n "Starting fail2ban..."
+	$DAEMON -x start > /dev/null
+    if [ $? -eq 0 ]; then
+        echo " done"
+    else
+        echo " failed"
+    fi
+}
+
+do_status()
+{
+    $DAEMON ping > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "fail2ban is running."
+	else
+		echo "fail2ban is stop."
+	fi
+}
+
+do_stop()
+{
+    echo -n "Stopping fail2ban..."
+    $DAEMON stop > /dev/null || return 2
+	if [ $? -eq 0 ]; then
+        echo " done"
+    else
+        echo " failed"
+    fi
+}
+
+do_reload() {
+    echo -n "Reloading fail2ban..."
+	$DAEMON reload > /dev/null
+	if [ $? -eq 0 ]; then
+        echo " done"
+    else
+        echo " failed"
+    fi
+}
+
+command="$1"
+case "$command" in
+    start|force-start)
+        do_start "$command"
+        ;;
+
+    stop)
+        do_stop
+        ;;
+
+    restart|force-reload)
+        do_stop
+		do_start
+        ;;
+
+    reload|force-reload)
+        do_reload
+        ;;
+
+    status)
+        do_status
+        ;;
+    *)
+        echo "Usage: $SCRIPTNAME {start|force-start|stop|restart|force-reload|status}" >&2
+        ;;
+esac
