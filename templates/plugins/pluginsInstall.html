@@ -1,0 +1,52 @@
+        <link rel="stylesheet" href="/static/css/table.css" />
+            <link rel="stylesheet" href="/static/css/global.css" media="all">
+    <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+<div id = "cont"></div>
+    <script type="text/javascript" src="/static/js/base64.js"></script>
+<script>
+	name = '{{name}}'
+	if (name == 'nginx'){
+    confirmInstall = parent.layer.alert('nginx未安装,确认安装??', {
+        skin: 'layui-layer-molv',
+        closeBtn: 1,
+        anim: 0,
+        btn: ['确定', '取消'],
+        icon: 0,
+        yes: function () {
+            location.href = '/plugins/install/'+name;
+            parent.layer.close(confirmInstall);
+        }, btn2: function () {
+            parent.layer.msg('您未安装...');
+            parent.layer.close(confirmInstall);
+        }
+    });}
+    else if (name == 'mysql'){
+        
+    var strVar = "";
+    strVar += "<br><br><br><button class=\"layui-btn layui-btn\"  onclick = \"mysqlInstall(1)\">MySQL 5.1.73<\/button>\n";
+    strVar += "<button class=\"layui-btn layui-btn\"  onclick = \"mysqlInstall(2)\">MySQL 5.5.62<\/button>\n";
+    strVar += "<button class=\"layui-btn layui-btn\" onclick = \"mysqlInstall(3)\">MySQL 5.6.42<\/button>\n";
+    strVar += "<button class=\"layui-btn layui-btn\"  onclick = \"mysqlInstall(4)\">MySQL 5.7.24<\/button>\n";
+    strVar += "<button class=\"layui-btn layui-btn\"  onclick = \"mysqlInstall(5)\">MySQL 8.0.13<\/button>\n<br><br><br><br><br>";
+    strVar += "<button class=\"layui-btn layui-btn\"  onclick = \"mysqlInstall(6)\">MariaDB 5.5.62<\/button>\n";
+    strVar += "<button class=\"layui-btn layui-btn\" onclick = \"mysqlInstall(7)\">MariaDB 10.0.37<\/button>\n";
+    strVar += "<button class=\"layui-btn layui-btn\" onclick = \"mysqlInstall(8)\">MariaDB 10.1.37<\/button>\n";
+    strVar += "<button class=\"layui-btn layui-btn\"  onclick = \"mysqlInstall(9)\">MariaDB 10.2.19<\/button>\n";
+    strVar += "<button class=\"layui-btn layui-btn\" onclick = \"mysqlInstall(10)\">MariaDB 10.3.11<\/button>\n";
+    document.getElementById("cont").innerHTML = strVar
+            mysqlInstall = function (version) {
+                var version=version
+                confirmmysqlinstall = parent.layer.prompt({
+                        title: '请输入要设定的数据库root密码',
+                        value: ''
+                    },
+                    function (value, index, elem) {
+                        parent.layer.close(confirmmysqlinstall);
+                        
+                        location.href = '/plugins/install/'+name+"?version="+version+"&pwd="+Base64.encode(value);
+                    }
+                );
+            };
+}
+</script>
+

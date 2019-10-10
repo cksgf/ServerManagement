@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>登录</title>
+		<link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
+		<link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+		<link rel="stylesheet" href="/static/css/login.css" />
+	</head>
+
+	<body class="beg-login-bg">
+		<div class="beg-login-box">
+			<header>
+				<h1>后台登录</h1>
+			</header>
+			<div class="beg-login-main">
+				<form action="/login" class="layui-form" method="post">
+					<div class="layui-form-item">
+						<label class="beg-login-icon">
+                        <i class="layui-icon">&#xe612;</i>
+                    </label>
+						<input type="text" name="username" autocomplete="off" placeholder="输入登录名" class="layui-input">
+					</div>
+					<div class="layui-form-item">
+					<label class="beg-login-icon">
+                        <i class="layui-icon">&#xe642;</i>
+                    </label>
+						<input type="password" name="password"  autocomplete="off" placeholder="输入密码" class="layui-input">
+					</div>
+					<div class="layui-form-item">
+							<button style="margin-left: 100px" class="layui-btn layui-btn-primary" lay-submit lay-filter="login">
+                            <i class="layui-icon">&#xe650;</i> 登录
+                        </button>
+
+						<div class="beg-clear" style="color:red">{{text}}</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</body>
+
+</html>

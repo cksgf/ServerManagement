@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>表单</title>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
+        <link rel="stylesheet" href="/static/css/table.css" />
+            <link rel="stylesheet" href="/static/css/global.css" media="all">
+    <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+    <link rel="stylesheet" type="text/css" href="/static/css/font-awesome.min.css">
+</head>
+
+<body>
+    <div style="margin: 15px;width: 45%;float: left">
+        <form class="layui-form" action="">
+            <input type="text" name="type" autocomplete="off" class="layui-input" value="senc" style="display: none">
+            <fieldset class="layui-elem-field">
+                <legend>以秒为单位循环执行</legend>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">间隔秒数</label>
+                    <div class="layui-input-inline">
+                        <input type="number" name="senc" lay-verify="number" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">shell内容</label>
+                    <div class="layui-input-block">
+                        <textarea type="text" name='value' placeholder="请输入shell内容" class="layui-textarea"></textarea>
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit="" lay-filter="taskSenc">立即提交</button>
+                    <button type="reset" id="senc" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+
+
+        <form class="layui-form" action="" style="margin-top: 50px">
+            <fieldset class="layui-elem-field">
+                <legend>设定周期循环<a style="color: #848484;font-size: 8px;margin-left:15px">设定当日不会执行</a></legend>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">周期类型</label>
+
+                    <div class="layui-input-inline">
+                        <select name="type">
+                            <option value="">请选择</option>
+                            <option value="day">每天</option>
+                            <option value="week">每周</option>
+                            <option value="month">每月</option>
+                            <option value="once">仅一次</option>
+                        </select>
+                    </div>
+                </div>
+                <div id='taskType'>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">设定时间</label>
+                    <div class="layui-input-inline">
+                        <input type="number" name="hour" lay-verify="number" placeholder="时" autocomplete="off" class="layui-input" max="23">
+                    </div>
+                    <div class="layui-input-inline">
+                        <input type="number" name="mint" lay-verify="number" placeholder="分" autocomplete="off" class="layui-input" max="59">
+                    </div>
+                    <div class="layui-input-inline">
+                        <input type="number" name="senc" lay-verify="number" placeholder="秒" autocomplete="off" class="layui-input" max="59">
+                    </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">shell内容</label>
+                    <div class="layui-input-block">
+                        <textarea type="text" name='value' placeholder="请输入shell内容" class="layui-textarea"></textarea>
+                    </div>
+                </div>
+
+            </fieldset>
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit="" lay-filter="taskOther">立即提交</button>
+                    <button type="reset" id="other" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+
+
+
+
+
+<div class="admin-main" style="float: left; ">
+
+        <fieldset class="layui-elem-field">
+            <legend>已创建的计划任务</legend>
+            <div class="layui-field-box">
+                <table class="site-table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                创建时间
+                            </th>
+                            <th>
+                                计划类型
+                            </th>
+                            <th>
+                                计划时间
+                            </th>
+                            <th>
+                                shell内容
+                            </th>
+                            <th>
+                                下次执行时间
+                            </th>
+                            <th>
+                                删除计划任务
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataList">
+                    </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+
+
+
+
+    <script type="text/javascript" src="/static/js/ffevent.js"></script>
+        <script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
+        <script src="/static/js/jquery.min.js"></script>
+        <script>
+        function GetTaskList() {
+            $.ajax({
+                type: "POST",
+                dataType: "html",
+                url: '/SelectTask',
+                success: function (data) {
+                    var result = jQuery.parseJSON(data);
+                    var hem = '';
+					$.each(result.result, function (i, item) {
+                   hem += "<tr><td>"+item.creatTime+"</td>";
+                   //类型
+                   var t='';
+                   var te='';
+                   if (item.type == 'day'){t='每日任务';te='每日 '+item.hour+':'+item.mint+':'+item.senc}
+                   	else if (item.type == 'week'){t='每周任务';te='每周'+item.week+' '+item.hour+':'+item.mint+':'+item.senc}
+                   	else if (item.type == 'month'){t='每月任务';te='每月'+item.day+'日 '+item.hour+':'+item.mint+':'+item.senc}
+                   	else if (item.type == 'once'){t='仅一次';te=item.year+'年'+item.month+'月'+ item.day+'日 '+item.hour+':'+item.mint+':'+item.senc}
+                   	else {t = '时间循环';te='每'+item.senc+'秒'};
+                   hem += "<td>"+t+"</td>";
+                   hem += "<td>"+te+"</td>";
+                   if (item.value.length > 20) {hem += "<td><a style='color:#1AA094' href='javascript:void(0);' title='"+item.value+"' onclick='alertTtl()' id='" + item.taskID + "'>"+item.value.slice(0,20)+"...</a></td>";}
+                   else{hem += "<td>"+item.value+"</td>";};
+                   
+                   hem += "<td>"+item.nextRunTime+"</td>";
+                   hem += "<td><a style='color:#1AA094' href='javascript:void(0);' onclick='DeleteTask()' id='" + item.taskID + "'>删除</a></td></tr>";
+               		});
+               		document.getElementById("dataList").innerHTML = hem;
+
+                }
+            });
+        };
+        function DeleteTask(){
+        var taskid = event.srcElement.id;
+            $.ajax({
+                type: "POST",
+                dataType: "html",
+                url: '/DeleteTask',
+                data:{'taskid':taskid},
+                success: function (data) {
+                    resultCode = jQuery.parseJSON(data).resultCode;
+		                if (resultCode == '0') {
+		                    layer.msg('删除成功');
+		                    GetTaskList();
+		                } 
+		                else{layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]})}
+                
+                }
+            });
+        };
+            layui.use(['form', 'layedit', 'laydate'], function () {
+                var form = layui.form(),
+                    layer = layui.layer,
+                    layedit = layui.layedit,
+                    laydate = layui.laydate;
+                var $ = layui.jquery;
+                alertTtl = function(){
+                clickTittle = event.srcElement.title;
+                taskID = event.srcElement.id;
+                    clickalert = layer.alert('shell内容', {
+                        title: 'shell内容',
+                        skin: 'layui-layer-molv',
+                        anim: 0,
+                        btn: ['停止任务', '返回'],
+                        content: clickTittle,
+                        yes: function (index) {
+                            $.ajax({
+                            type: "POST",
+                            dataType: "html",
+                            url: '/DeleteTask',
+                            data:{'taskid':taskID},
+                            success: function (data) {
+                                resultCode = jQuery.parseJSON(data).resultCode;
+                                    if (resultCode == '0') {
+                                        layer.msg('删除成功');
+                                        GetTaskList();
+                                    } 
+                                    else{layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]})}
+                            
+                            }
+                        });
+                                layer.close(clickalert);
+                            },
+                            btn2: function () {
+                                layer.close(clickalert);
+                            }
+                    });
+                };
+                form.on('submit(taskSenc)', function (data) {
+                    data = data.field;
+                    $.ajax({
+                        url: '/CreatTask',
+                        dataType: "html",
+                        type: "POST",
+                        data: data,
+                        success: function (data) {
+                            resultCode = jQuery.parseJSON(data).resultCode;
+                            if (resultCode == '0') {
+                                layer.msg('设定成功');
+                                document.getElementById("senc").click();
+                                GetTaskList();
+                            } else {
+                                layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]});
+                            };
+                        }
+                    })
+
+                    return false;
+                });
+                form.on('submit(taskOther)', function (data) {
+                    data = data.field;
+                    $.ajax({
+                        url: '/CreatTask',
+                        dataType: "html",
+                        type: "POST",
+                        data: data,
+                        success: function (data) {
+                            resultCode = jQuery.parseJSON(data).resultCode;
+                            if (resultCode == '0') {
+                                layer.msg('设定成功');
+                                document.getElementById("other").click();
+                                GetTaskList();
+                            } else {
+                                layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]});
+                            };
+                        }
+                    })
+
+                    return false;
+                });
+                form.on("select", function (data) {
+                    if (data.value == 'day') {
+                        document.getElementById("taskType").innerHTML = '';
+                    } else if (data.value == 'week') {
+                        var strVar = "";
+                        strVar += "					<div class=\"layui-form-item layui-form-text\">\n";
+                        strVar += "						<div class=\"layui-form-item layui-form-text\">\n";
+                        strVar += "							<label class=\"layui-form-label\">每周<\/label>\n";
+                        strVar += "							<div class=\"layui-input-inline\">\n";
+                        strVar += "								<input type=\"number\" name=\"week\" lay-verify=\"number\" placeholder=\"每周5,则输入5\" autocomplete=\"off\" class=\"layui-input\" max=\"7\">\n";
+                        strVar += "							<\/div>\n";
+                        strVar += "						<\/div>\n";
+                        strVar += "					<\/div>\n";
+                        document.getElementById("taskType").innerHTML = strVar;
+                    } else if (data.value == 'month') {
+                        var strVar = "";
+                        strVar += "					<div class=\"layui-form-item layui-form-text\">\n";
+                        strVar += "						<label class=\"layui-form-label\">日期<\/label>\n";
+                        strVar += "						<div class=\"layui-input-inline\">\n";
+                        strVar += "							<input type=\"number\" name=\"day\" lay-verify=\"number\" placeholder=\"每月的3号,则输入3\" autocomplete=\"off\" class=\"layui-input\" max=\"31\">\n";
+                        strVar += "						<\/div>\n";
+                        strVar += "					<\/div>\n";
+                        document.getElementById("taskType").innerHTML = strVar;
+                    } else if (data.value == 'once') {
+
+                        var strVar = "";
+                        strVar += "                 <div class=\"layui-form-item layui-form-text\">\n";
+                        strVar += "                     <label class=\"layui-form-label\">年<\/label>\n";
+                        strVar += "                     <div class=\"layui-input-inline\">\n";
+                        strVar += "                         <input type=\"number\" name=\"year\" lay-verify=\"number\" placeholder=\"哪年\" autocomplete=\"off\" class=\"layui-input\" max=\"31\">\n";
+                        strVar += "                     <\/div>\n";
+                        strVar += "                 <\/div>\n";
+                        strVar += "                 <div class=\"layui-form-item layui-form-text\">\n";
+                        strVar += "                     <label class=\"layui-form-label\">月<\/label>\n";
+                        strVar += "                     <div class=\"layui-input-inline\">\n";
+                        strVar += "                         <input type=\"number\" name=\"month\" lay-verify=\"number\" placeholder=\"哪个月\" autocomplete=\"off\" class=\"layui-input\" max=\"31\">\n";
+                        strVar += "                     <\/div>\n";
+                        strVar += "                 <\/div>\n";
+                        strVar += "                 <div class=\"layui-form-item layui-form-text\">\n";
+                        strVar += "                     <label class=\"layui-form-label\">日<\/label>\n";
+                        strVar += "                     <div class=\"layui-input-inline\">\n";
+                        strVar += "                         <input type=\"number\" name=\"day\" lay-verify=\"number\" placeholder=\"哪天\" autocomplete=\"off\" class=\"layui-input\" max=\"31\">\n";
+                        strVar += "                     <\/div>\n";
+                        strVar += "                 <\/div>\n";
+                        document.getElementById("taskType").innerHTML = strVar;
+                    } else {
+                        document.getElementById("taskType").innerHTML = '';
+                    }
+                })
+
+            });
+            GetTaskList()
+        </script>
+</body>
+
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>文件管理器</title>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="/static/css/global.css" media="all">
+    <link rel="stylesheet" type="text/css" href="/static/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/css/table.css" />
+    <script src="/static/js/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="admin-main">
+        <blockquote class="layui-elem-quote">
+	            <a href='javascript:void(0);' onclick='CreateRemote()' class="layui-btn layui-btn-small">
+	                <i class="layui-icon"></i> 新建主机
+	            </a>
+	            <a id = 'RemoteShellA' href='javascript:void(0);' onclick='RemoteShell()' style="display: none" class="layui-btn layui-btn-small">
+	                <i class="layui-icon"></i> 批量执行
+	            </a>
+	            <a id = 'DeleteRRemote' href='javascript:void(0);' onclick='DeleteR()' style="display: none" class="layui-btn layui-btn-small">
+	                <i class="layui-icon"></i> 批量删除
+	            </a>
+	        <ul>
+				<li>1.可以改变shell执行的目录</li>
+				<li> 2.多条shell命令使用英文分号;来分割</li>
+				<li> 3.若使用root身份执行shell,请在shell最后追加#root</li>
+				<li>如:cd /home;pwd>/home/pwd.txt #root</li>
+			</ul>	
+
+        </blockquote>
+        <fieldset class="layui-elem-field">
+            <legend>选择主机后进行操作</legend>
+            <div class="layui-field-box">
+                <table class="site-table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                IP
+                            </th>
+                            <th>
+                                登陆端口
+                            </th>
+                            <th>
+                                登陆账号
+                            </th>
+                            <th>
+                                登陆密码
+                            </th>
+                            <th>
+                                root密码
+                            </th>
+                            <th>
+                                分组
+                            </th>
+                            <th>
+                                备注
+                            </th>
+                            <th>
+                                创建时间
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataList">
+                    </tbody>
+                </table>
+            </div>
+        </fieldset>
+        <div class="admin-table-page">
+            <div id="page" class="page">
+            </div>
+        </div>
+    </div>
+        <script type="text/javascript" src="/static/js/ffevent.js"></script>
+    <script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
+    <script type="text/javascript">
+var strVar = "";
+    strVar += "        <form>\n";
+    strVar += "            <div class=\"layui-form-item layui-form-text\">\n";
+    strVar += "                <label class=\"layui-form-label\">主机IP:<\/label>\n";
+    strVar += "                <div class=\"layui-input-inline\">\n";
+    strVar += "                    <input type=\"text\" id=\"IP\" name=\"IP\" autocomplete=\"off\" class=\"layui-input\">\n";
+    strVar += "                <\/div>\n";
+    strVar += "            <\/div>\n";
+    strVar += "            <div class=\"layui-form-item layui-form-text\">\n";
+    strVar += "                <label class=\"layui-form-label\">远程端口:<\/label>\n";
+    strVar += "                <div class=\"layui-input-inline\">\n";
+    strVar += "                    <input type=\"text\" id=\"PORT\" name=\"PORT\" autocomplete=\"off\" class=\"layui-input\">\n";
+    strVar += "                <\/div>\n";
+    strVar += "            <\/div>\n";
+    strVar += "            <div class=\"layui-form-item layui-form-text\">\n";
+    strVar += "                <label class=\"layui-form-label\">主机账号:<\/label>\n";
+    strVar += "                <div class=\"layui-input-inline\">\n";
+    strVar += "                    <input type=\"text\" id=\"USERNAME\" name=\"USERNAME\" autocomplete=\"off\" class=\"layui-input\">\n";
+    strVar += "                <\/div>\n";
+    strVar += "            <\/div>\n";
+    strVar += "            <div class=\"layui-form-item layui-form-text\">\n";
+    strVar += "                <label class=\"layui-form-label\">主机密码:<\/label>\n";
+    strVar += "                <div class=\"layui-input-inline\">\n";
+    strVar += "                    <input type=\"password\" id=\"PWD\" name=\"PWD\" autocomplete=\"off\" class=\"layui-input\">\n";
+    strVar += "                <\/div>\n";
+    strVar += "            <\/div>\n";
+    strVar += "            <div class=\"layui-form-item layui-form-text\">\n";
+    strVar += "                <label class=\"layui-form-label\">root密码:<\/label>\n";
+    strVar += "                <div class=\"layui-input-inline\">\n";
+    strVar += "                    <input type=\"text\" id=\"ROOTPWD\" name=\"ROOTPWD\" autocomplete=\"off\" class=\"layui-input\">\n";
+    strVar += "                <\/div>\n";
+    strVar += "            <\/div>\n";
+    strVar += "            <div class=\"layui-form-item layui-form-text\">\n";
+    strVar += "                <label class=\"layui-form-label\">分组:<\/label>\n";
+    strVar += "                <div class=\"layui-input-inline\">\n";
+    strVar += "                    <input type=\"text\" id=\"GROUPS\" name=\"GROUPS\" autocomplete=\"off\" class=\"layui-input\">\n";
+    strVar += "                <\/div>\n";
+    strVar += "            <\/div>\n";
+    strVar += "            <div class=\"layui-form-item layui-form-text\">\n";
+    strVar += "                <label class=\"layui-form-label\">备注:<\/label>\n";
+    strVar += "                <div class=\"layui-input-inline\">\n";
+    strVar += "                    <input type=\"text\" id=\"NOTE\" name=\"NOTE\" autocomplete=\"off\" class=\"layui-input\">\n";
+    strVar += "                <\/div>\n";
+    strVar += "            <\/div>\n";
+    strVar += "        <\/form>\n";
+
+        var selectedList = new Array();
+
+        function getRHtml(te) {
+            var $ = layui.jquery;
+            var hem = '';
+            $.each(te, function (i, item) {
+                hem += '<tr>';
+                hem += "<td><div style='float:left'><input type='checkbox' onclick='checkboxClickR()' id='" + item[0] + "'>&#8195;" + item[0] + "</div></td>";
+                hem += "<td>" + item[1] + "</td>";
+                hem += "<td>" + item[2] + "</td>";
+                hem += "<td>********</td>";
+                hem += "<td>********</td>";
+                hem += "<td>" + item[3] + "</td>";
+                hem += "<td>" + item[4] + "</td>";
+                hem += "<td>" + item[5] + "</td>";
+                hem += "</tr>";
+            });
+            return hem;
+        };
+        layui.config({
+            base: '/static/plugins/layui/modules/'
+        });
+        layui.use(['icheck', 'laypage', 'layer'], function () {
+            var files = '';
+            var $ = layui.jquery,
+                laypage = layui.laypage,
+                layer = parent.layer === undefined ? layui.layer : parent.layer;
+            $('input').iCheck({
+                checkboxClass: 'icheckbox_flat-green'
+            });
+            function GetRResult() {
+                $.ajax({
+                    type: "POST",
+                    dataType: "html",
+                    url: '/SelectBatchExec',
+                    success: function (data) {
+                        if (jQuery.parseJSON(data).resultCode == '1') {
+                            layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]});
+                            return 0
+                        };
+                        result = jQuery.parseJSON(data).result;
+                        var t = result.slice(0, 15);
+                        ht = getRHtml(t);
+                        document.getElementById("dataList").innerHTML = ht;
+                        laypage({
+                            cont: 'page',
+                            pages: Math.ceil(files.length / 15),
+                            groups: 5,
+                            jump: function (obj, first) {
+                                var curr = obj.curr;
+                                if (!first) {
+                                    var te = files.slice(curr * 15 - 15, curr * 15);
+                                    hem = getRHtml(te);
+                                    document.getElementById("dataList").innerHTML = hem;
+                                }
+                            }
+                        });
+                    }
+                });
+            };
+            GetRResult();
+            CreateRemote = function () {
+              CreateRemoteOpen = top.layer.open({
+                  type: 1,   
+                  title: '新建远程主机',   
+                  shadeClose: false,  
+                  shade: 0.8,    
+                  btn: ['保存', '关闭'],
+                  area: ['450px', '500px'],  
+                  content: strVar, 
+                  yes: function(index){
+                        $.ajax({
+                            type: "POST",
+                            dataType: "html",
+                            url: '/CreateBatchExec',
+                            data: {
+                                'IP': top.document.getElementById('IP').value,
+                                'PORT': top.document.getElementById('PORT').value,
+                                'USERNAME': top.document.getElementById('USERNAME').value,
+                                'PWD': top.document.getElementById('PWD').value,
+                                'GROUPS': top.document.getElementById('GROUPS').value,
+                                'NOTE': top.document.getElementById('NOTE').value,
+                                'ROOTPWD': top.document.getElementById('ROOTPWD').value,
+                            },
+                            success: function (data) {
+                                resultCode = jQuery.parseJSON(data).resultCode;
+                                if (resultCode == '0') {
+                                    layer.msg('创建成功')
+                                } else {
+                                    layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]});
+                                };
+                                GetRResult();
+                                layer.close(CreateRemoteOpen);
+                            }
+                        });
+                },
+                 btn2: function(){
+                                console.log('取消创建')
+                }
+
+              });
+            };
+            checkboxClickR = function () {
+                if (document.getElementById(event.srcElement.id).checked) {
+                    selectedList.push(event.srcElement.id)
+                } else {
+                    var index = selectedList.indexOf(event.srcElement.id)
+                    selectedList.splice(index, 1)
+                };
+                console.log(selectedList)
+                if (selectedList.length > 0){
+                    document.getElementById('DeleteRRemote').style.display="";
+                    document.getElementById('RemoteShellA').style.display=""
+                    
+                }
+                else{ document.getElementById('DeleteRRemote').style.display="none";
+                document.getElementById('RemoteShellA').style.display="none";
+            };
+            };
+            RemoteShell = function(){
+                inputprompt = layer.prompt({
+                    title: '输入shell',
+                    formType: 2},
+                    function (value, index, elem) {
+                        var promptInputValue = value;
+                        $.ajax({
+                            type: "POST",
+                            dataType: "html",
+                            url: '/BatchExecShell',
+                            data: {
+                                'ipList': JSON.stringify(selectedList),
+                                'shell':promptInputValue
+                            },
+                            success: function (data) {
+                                resultCode = jQuery.parseJSON(data).resultCode;
+                                if (resultCode == '0') {
+                                    GetRResult();
+                                    layer.msg('执行成功')
+                                } else {
+                                    layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]});
+                                    GetRResult()
+                                }
+                            }
+                        });
+                        selectedList = []
+                        layer.close(inputprompt);
+                    }
+                );
+            };
+            DeleteR = function () {
+                clickalert = layer.alert('真的要删除吗', {
+                    skin: 'layui-layer-molv' 
+                    ,
+                    closeBtn: 1 
+                    ,
+                    anim: 0 
+                    ,
+                    btn: ['确定', '取消'] 
+                    ,
+                    icon: 0 
+                    ,
+                    yes: function () {
+                        $.ajax({
+                            type: "POST",
+                            dataType: "html",
+                            url: '/DeletetBatchExec',
+                            data: {
+                                'ipList': JSON.stringify(selectedList)
+                            },
+                            success: function (data) {
+                                resultCode = jQuery.parseJSON(data).resultCode;
+                                if (resultCode == '0') {
+                                    GetRResult();
+                                    layer.msg('删除成功')
+                                } else {
+                                    layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]});
+                                    GetRResult()
+                                }
+                            }
+                        });
+                        selectedList = [];
+                        layer.close(clickalert);
+                    }, btn2: function () {
+                        layer.msg('删除取消');
+                    }
+                });
+            };
+        });
+    </script>
+</body>
+
+</html>
+
+
+
+

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>资源记录</title>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="/static/css/table.css" />
+    <link rel="stylesheet" href="/static/css/global.css" media="all">
+    <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+    <link rel="stylesheet" type="text/css" href="/static/css/font-awesome.min.css">
+</head>
+
+<body style="background: #EFF8FB;">
+    <div style="width: 45%;height: 300px;float: left;margin-top: 20px;margin-left: 20px;background:#fff">
+    	<div style="float: left;margin-top: 20px;">
+        <form class="layui-form" action="">
+            <div class="layui-form-item layui-form-text">
+                <div class="layui-input-inline">
+                    <label class="layui-form-label">开启监控:</label>
+                    <input type="checkbox" {{state|safe}} name="state" id='state' lay-skin="switch" lay-filter="switch" title="开启监控">
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">显示x天:</label>
+                <div class="layui-input-inline">
+                    <input type="number" name="visitDay" lay-verify="number" autocomplete="off" class="layui-input" value='{{visitDay}}'>
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">间隔x秒:</label>
+                <div class="layui-input-inline">
+
+                    <input type="number" name="inv" lay-verify="number" autocomplete="off" class="layui-input" value='{{inv}}'>
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">保存x天:</label>
+                <div class="layui-input-inline">
+
+                    <input type="number" name="saveDay" lay-verify="number" autocomplete="off" class="layui-input" value='{{saveDay}}'>
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label"></label>
+                <div class="layui-input-inline">
+                    <button class="layui-btn" lay-submit="" lay-filter="ControlConfig">立即提交</button>
+                </div>
+            </div>
+        </form>
+        </div>
+        <div style="float: right;margin-right: 60px;margin-top: 45px;width:300px;">
+        	<a>计算机名: &emsp; {{PCname}}</a><br><br>
+        	<a>内网IP: &emsp;&emsp; {{NATHOST}}</a><br><br>
+        	<a>外网IP:&emsp; &emsp; {{NETHOST}}</a><br><br>
+        	<a>开机时间: &emsp; {{bootTime}}</a><br><br>
+            <a style = 'word-wrap:break-word'>系统名称: &emsp; {{platform}}</a><br><br>
+        </div>
+    </div>
+    <div id="echartsLine1" style="width: 45%;height: 300px;float: left;margin-top: 20px;margin-left: 20px;"></div>
+    <div id="echartsLine2" style="width: 45%;height: 300px;float: left;margin-top: 20px;margin-left: 20px;"></div>
+    <div id="echartsLine3" style="width: 45%;height: 300px;float: left;margin-top: 20px;margin-left: 20px;"></div>
+</body>
+    <script type="text/javascript" src="/static/js/ffevent.js"></script>
+<script src="/static/js/echarts.js"></script>
+<script src="/static/js/jquery.min.js"></script>
+<script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
+<script>
+    layui.use(['form', 'layedit', 'laydate'], function () {
+        var form = layui.form(),
+            layer = layui.layer,
+            layedit = layui.layedit,
+            laydate = layui.laydate;
+        var $ = layui.jquery;
+        form.on('submit(ControlConfig)', function (data) {
+            data = data.field;
+            $.ajax({
+                url: '/ControlPanelConfig',
+                dataType: "html",
+                type: "POST",
+                data: data,
+                success: function (data) {
+                    resultCode = jQuery.parseJSON(data).resultCode;
+                    if (resultCode == '1') {
+                        layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]})
+                    };
+                    location.reload();
+
+                }
+            })
+
+            return false;
+        });
+        form.on('switch(switch)', function (data) {
+            $.ajax({
+                url: '/ControlPanelConfig',
+                dataType: "html",
+                type: "POST",
+                data: {
+                    'state': document.getElementById("state").checked
+                },
+                success: function (data) {
+                    resultCode = jQuery.parseJSON(data).resultCode;
+                    if (resultCode == '1') {
+                        layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]})
+                    };
+                    location.reload();
+                }
+            })
+
+        });
+    });
+</script>
+<script type="text/javascript">
+    var cpu = {
+        'used': [],
+        'free': [],
+        time: []
+    };
+    var memory = {
+        'used': [],
+        'free': [],
+        time: []
+    };
+    var net = {
+        'rcvd': [],
+        'send': [],
+        time: []
+    };
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: '/ControlPanel',
+        success: function (data) {
+            var result = jQuery.parseJSON(data)
+            if (result.resultCode == '1') {
+                alert(result.result);
+                return 0
+            };
+            $.each(result.result, function (i, item) {
+                cpu.time.push(item[1]);
+                net.time.push(item[1]);
+                memory.time.push(item[1]);
+
+                itemJson = jQuery.parseJSON(item[0])
+                cpu.used.push(itemJson.cpu.cpuUsed);
+
+                memory.used.push(itemJson.memory.memoryUsed);
+
+                net.rcvd.push(itemJson.net.rcvd);
+                net.send.push(itemJson.net.send);
+            });
+            createEcharts();
+        }
+    });
+
+    function creatNetEcharts() {
+        option = {
+            title: {
+                text: '网络IO'
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross',
+                    label: {
+                        backgroundColor: '#6a7985'
+                    }
+                },
+            },
+            legend: {
+                data: ['发送', '下载']
+            },
+
+            xAxis: [{
+                type: 'category',
+                boundaryGap: false,
+                data: net.time
+            }],
+            yAxis: [{
+                type: 'value'
+            }],
+            series: [{
+                    name: '发送',
+                    type: 'line',
+                    areaStyle: {},
+                    data: net.send
+                }, {
+                    name: '下载',
+                    type: 'line',
+                    areaStyle: {},
+                    data: net.rcvd
+                },
+
+            ],
+            backgroundColor: '#FFFFFF',
+            color: ['#BE81F7', '#C8FE2E'],
+            dataZoom: [{
+                start: 85,
+                end: 100,
+                type: 'inside'
+            }, {
+                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+            }],
+        };　　
+        echartsLineFunc = echarts.init(echartsLine3);
+        echartsLineFunc.setOption(option);
+    };
+
+    function creatCPUEcharts() {
+        option = {
+            title: {
+                text: 'CPU使用记录'
+            },
+                    
+
+            tooltip: {
+                trigger: 'axis',
+                formatter: "{b}<br/>{a}:{c}%",
+                axisPointer: {
+                    type: 'cross',
+                    label: {
+                        backgroundColor: '#6a7985'
+                    }
+                }
+            },
+            xAxis: [{
+                type: 'category',
+                boundaryGap: false,
+                data: cpu.time
+            }],
+            yAxis: [{
+                type: 'value'
+            }],
+            series: [{
+                name: 'CPU已用',
+                type: 'line',
+                data: cpu.used
+            }],
+            color: '#FE2EC8',
+            backgroundColor: '#FFFFFF',
+            dataZoom: [{
+                start: 85,
+                end: 100,
+                type: 'inside'
+            }, {
+                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+            }],
+        };　　
+        echartsLineFunc = echarts.init(echartsLine1);
+        echartsLineFunc.setOption(option);
+    };
+
+    function creatMemoryEcharts() {
+        option = {
+            title: {
+                text: '内存使用记录'
+            },
+            tooltip: {
+                trigger: 'axis',
+                formatter: "{b}<br/>{a}:{c}%",
+                axisPointer: {
+                    type: 'cross',
+                    label: {
+                        backgroundColor: '#6a7985'
+                    }
+                }
+            },
+            xAxis: [{
+                type: 'category',
+                boundaryGap: false,
+                data: memory.time
+            }],
+            yAxis: [{
+                type: 'value'
+            }],
+            series: [{
+                    name: '内存已用',
+                    type: 'line',
+                    data: memory.used
+                },
+
+            ],
+            color: '#00FF00',
+            backgroundColor: '#FFFFFF',
+            dataZoom: [{
+                start: 85,
+                end: 100,
+                type: 'inside',
+            }, {
+                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+            }],
+
+        };　　
+        echartsLineFunc = echarts.init(echartsLine2);
+        echartsLineFunc.setOption(option);
+    };
+
+    function createEcharts() {
+        creatNetEcharts();
+        creatCPUEcharts();
+        creatMemoryEcharts();
+    };
+</script>
+
+</html>

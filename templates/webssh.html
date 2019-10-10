@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
+    <title>web ssh</title>
+        <link rel="stylesheet" href="/static/css/table.css" />
+            <link rel="stylesheet" href="/static/css/global.css" media="all">
+    <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+    <link rel="stylesheet" type="text/css" href="/static/css/font-awesome.min.css">
+    <link href="/static/css/xterm.min.css" rel="stylesheet" type="text/css"/>
+        <style>
+        .terminal {
+            border: #000 solid 5px;
+            font-family: cursive;
+        {#                font-family: Arial, Helvetica, Tahoma ,"Monaco", "DejaVu Sans Mono", "Liberation Mono", sans-serif;#}{#                font-family: Tahoma, Helvetica, Arial, sans-serif;#}{#                font-family: "\5B8B\4F53","","Monaco", "DejaVu Sans Mono", "Liberation Mono", "Microsoft YaHei", monospace;#} font-size: 15px;
+        {#                color: #f0f0f0;#} background: #000;
+        {#                width: 893px;#}{#                height: 1550px;#} box-shadow: rgba(0, 0, 0, 0.8) 2px 2px 20px;
+        }
+
+        .reverse-video {
+            color: #000;
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+<div style="margin: 15px;" id="loginbox">
+        <form class="layui-form" action="">
+            <fieldset class="layui-elem-field">
+                <legend>webssh登陆</legend>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">远程地址</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="host" lay-verify="text" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">端口</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="port" lay-verify="text" autocomplete="off" class="layui-input" value="22">
+                    </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">登陆用户名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="username" lay-verify="text" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">登录密码</label>
+                    <div class="layui-input-inline">
+                        <input type="password" name="pwd" lay-verify="text" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit="" lay-filter="sshlogin">登陆</button>
+                    <button type="reset" id="sshlogin" class="layui-btn layui-btn-primary">清空</button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+<div id="terms"></div>
+</body>
+        <script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
+        <script src="/static/js/jquery.min.js"></script>
+        <script src="/static/js/xterm.min.js"></script>
+    <script type="text/javascript" src="/static/js/ffevent.js"></script>
+<script>
+    var ids='';
+            layui.use(['form', 'layedit', 'laydate'], function () {
+                var form = layui.form(),
+                    layer = layui.layer,
+                    layedit = layui.layedit,
+                    laydate = layui.laydate;
+                var $ = layui.jquery;
+                form.on('submit(sshlogin)', function (data) {
+                    data = data.field;
+                    $.ajax({
+                        url: '/ssh',
+                        dataType: "html",
+                        type: "POST",
+                        data: data,
+                        success: function (data) {
+                            resultCode = jQuery.parseJSON(data).resultCode;
+                            if (resultCode == '0') {
+                            	document.getElementById('loginbox').hidden=true;
+                                ids=jQuery.parseJSON(data).ids;
+                                var term = new Terminal();
+                                term.open(document.getElementById('terms'));
+                                term.on('data', function (data) {
+                                    $.ajax({
+                                        type:'POST',
+                                        dataType:'html',
+                                        url:'/SSHInput',
+                                        data:{'ids':ids,'input':data},
+                                        success:function (data){
+                                        if(result.resultCode == 1){clearInterval(getSSHResult);term.destroy();document.getElementById('loginbox').hidden=false;};
+                                    }});
+
+                                });
+                               function getResult(){
+                                    $.ajax({
+                                        type:'POST',
+                                        dataType:'html',
+                                        url:'/GetSsh',
+                                        data:{'ids':ids},
+                                        success:function (data){
+                                            result = jQuery.parseJSON(data)
+                                            if(result.resultCode == 0){
+                                        term.write(result.data);
+                                             }
+                                             else{
+                                                clearInterval(getSSHResult);
+                                                term.destroy();
+                                                document.getElementById('loginbox').hidden=false;
+                                             }
+                                        }
+                                        
+                                    });
+                               };
+                                getSSHResult = setInterval(getResult,100);
+
+                            } else {
+                                layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]})
+                            };
+                        }
+                    })
+
+                    return false;
+                });
+            });
+</script>
+
+</html>

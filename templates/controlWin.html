@@ -1,0 +1,244 @@
+  <!DOCTYPE html>
+<html>
+  <head>
+    <title>Windows远程桌面</title>
+  </head>
+  <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+<link rel="stylesheet" href="/static/css/global.css" media="all">
+<link rel="stylesheet" href="/static/css/table.css" />
+  <body>
+    <div style="float: left">
+    <img src="/control/screen" onclick="ImgClick(this)" onmousedown="mousedown()" onmouseup="mouseup()" ondragstart="return false;" id="imgPic" >
+    <br>&#8195;&#8195;&#8195;&#8195;
+    <button class="layui-btn layui-btn-small" onclick='keyword("esc+")'>ESC</button>&#8195;
+    <button class="layui-btn layui-btn-small" onclick='keyword("f1+")'>F1</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f2+")'>F2</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f3+")'>F3</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f4+")'>F4</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f5+")'>F5</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f6+")'>F6</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f7+")'>F7</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f8+")'>F8</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f9+")'>F9</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f10+")'>F10</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f11+")'>F11</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("f12+")'>F12</button>
+    <br>
+    <br>
+    &#8195;&#8195;&#8195;&#8195;
+    <button class="layui-btn layui-btn-small" onclick='keyword("tab+")'>TAB</button>
+    &#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8194;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;
+    <button class="layui-btn layui-btn-small" onclick='keyword("insert+")'>insert</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("home+")'>home</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("pageup+")'>PageUP</button>
+    &#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;
+    <button class="layui-btn layui-btn-small" onclick='keyword("up+")'>&#8195;↑&#8195;</button>
+    <br><br>
+    &#8195;&#8195;&#8195;&#8195;
+    <button class="layui-btn layui-btn-small" onclick='keyword("capslock+")'>CAPSLOCK</button>
+    &#8195;&#8195;&#8195;&#8195;
+    <button class="layui-btn layui-btn-small" onclick='keyword("enter+")'>Enter</button>
+    &#8194;
+    <button class="layui-btn layui-btn-small" onclick='keyword("delete+")'>delete</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("end+")'>end</button>&#8194;
+    <button class="layui-btn layui-btn-small" onclick='keyword("pagedown+")'>PageDOWN</button>
+    &#8194;&#8194;&#8198;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;&#8194;
+    <button class="layui-btn layui-btn-small" onclick='keyword("left+")'>&#8195;←&#8195;</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("down+")'>&#8195;↓&#8195;</button>
+    <button class="layui-btn layui-btn-small" onclick='keyword("right+")'>&#8195;→&#8195;</button>
+    <br><br>
+    &#8195;&#8195;&#8195;&#8195;
+    <button class="layui-btn layui-btn-small" onclick='keyword("shift+")'>shift</button>
+    &#8195;&#8195;&#8195;&#8195;&#8195;
+    <button class="layui-btn layui-btn-small" onclick='keyword("backspace+")' style="width: 450px">Backspace</button>
+    <br><br>
+     &#8195;&#8195;&#8195;&#8195;
+                    <div class="layui-input-inline">
+                        <input type="text" id="KeyWordInput" class="layui-input" placeholder="请输入要发送的输入">
+                    </div>
+    <button class="layui-btn layui-btn-small" onclick="input()" >输入</button>
+    &#8195;&#8195;&#8195;&#8195;
+    <select id="choice" class="layui-btn layui-btn-small">
+        <option value="ctrl">ctrl</option>
+        <option value="alt">alt</option>
+        <option value="shift">shift</option>
+        <option value="winleft">win</option>
+    </select>
+    <div class="layui-input-inline">
+    <input class="layui-input" type="text" placeholder="选择、输入组合键" id="choiceValues"/></div><button class="layui-btn layui-btn-small" onclick='choiceKeyword()'>执行组合键</button>
+    &#8195;&#8195;&#8195;&#8195;
+    <div class="layui-input-inline">
+    <input class="layui-input" type="text" placeholder="输入执行的shell" id="shell"/></div><button class="layui-btn layui-btn-small" onclick='runShell()'>执行shell</button>
+    <br><br><br><br><br><br>
+    </div>  
+          <blockquote class="layui-elem-quote">
+            <h2>本功能仅在Windows下使用,有着诸多限制,所以并不默认开放,仅作为我个人方便之用</h2>
+            <br>
+            功能如下:
+            <br>
+            &#8195;&#8195;&#8195;&#8195;1.支持鼠标单击,双击,右键,双击,拖拽等.
+            <br>
+            &#8195;&#8195;&#8195;&#8195;2.支持自定义快捷键,可在组合键输入框内自行输入
+            <br>
+            &#8195;&#8195;&#8195;&#8195;(如想操作ctrl+alt+del,可在组合键内选中ctrl,然后输入"alt+del")
+            <br>
+            &#8195;&#8195;&#8195;&#8195;但由于技术所限,也有着诸多的限制,
+            <br>
+            限制如下:
+            <br>
+            &#8195;&#8195;&#8195;&#8195;1.仅支持已登录,进入桌面后使用,若未登录进入windows或无显示器,无法使用(无法显示图像)
+            <br>
+            &#8195;&#8195;&#8195;&#8195;2.并不能实时移动鼠标,鼠标拖拽功能可用,但仅能在网页中完成拖拽操作后,程序方才执行,
+            <br>
+            &#8195;&#8195;&#8195;&#8195;仅能够从起始点直线拖拽到目标点
+            <br>
+
+          </blockquote>
+        <div style="float: left ; margin-left: 45px">
+
+
+
+        </div>
+        <script type="text/javascript" src="/static/js/ffevent.js"></script>
+        <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+        <script>
+        var mouseX = 0
+        var mousey = 0
+//输入文字
+function input(){
+$.ajax({
+    type: "POST",
+    dataType: "html",
+    url: '/control/keyword',
+    data: {
+        'types': 'chr',
+        'chr': document.getElementById("KeyWordInput").value
+    }
+})
+document.getElementById("KeyWordInput").value = ''
+document.getElementById("KeyWordInput").placeholder = '已发送输入'
+};
+//输入组合键、热键
+function keyword(key){
+  $.ajax({
+    type: "POST",
+    dataType: "html",
+    url: '/control/keyword',
+    data: {
+        'types': 'key',
+        'key': JSON.stringify(key.split('+'))
+    }
+})
+}
+//手动输入组合键
+function choiceKeyword(){
+    value = document.getElementById("choice").value + '+' + document.getElementById("choiceValues").value
+    keyword(value)
+    document.getElementById("choiceValues").value = ''
+    document.getElementById("choiceValues").placeholder = '组合键已发送执行'
+
+}
+ 
+ window.onload = function(){
+  document.getElementById("imgPic").oncontextmenu=ContextMenu;
+ }
+ 
+function mousePosition(ev){
+     if(ev.pageX || ev.pageY){
+      return {x:ev.pageX, y:ev.pageY};
+      }
+      return {
+       x:ev.clientX + document.body.scrollLeft - document.body.clientLeft,
+       y:ev.clientY + document.body.scrollTop  - document.body.clientTop
+       };
+ }
+
+function mouseMove(ev){
+    ev = ev || window.event;
+    var mousePos = mousePosition(ev);
+    mouseX = mousePos.x;
+    mouseY = mousePos.y;
+}
+document.onmousemove = mouseMove;
+
+function ContextMenu(el)
+{
+  el = document.getElementById("imgPic")
+  $.ajax({
+    type: "POST",
+    dataType: "html",
+    url: '/control/mouse',
+    data: {
+        'x': parseInt(mouseX)-el.offsetLeft,
+        'y': parseInt(mouseY)-el.offsetTop,
+        'button': 'right'
+    }
+})
+  return false
+ }
+ 
+function ImgClick(el){
+  $.ajax({
+    type: "POST",
+    dataType: "html",
+    url: '/control/mouse',
+    data: {
+        'x': parseInt(mouseX)-el.offsetLeft,
+        'y': parseInt(mouseY)-el.offsetTop,
+        'button':'left'
+    }
+})
+}
+
+var ox=0
+var oy=0
+var t=Date.parse( new Date())
+function mousedown(event) {
+    t=Date.parse( new Date())
+            el = document.getElementById("imgPic")
+            ev =event || window.event;
+            var mousePos = mousePosition(ev);
+            mouseX = mousePos.x;
+            mouseY = mousePos.y;
+            console.log('按下' +mouseX + ',' + mouseY )
+            ox = parseInt(mouseX)-el.offsetLeft
+            oy = parseInt(mouseY)-el.offsetTop
+        }
+ 
+function mouseup(event) {
+
+            el = document.getElementById("imgPic")
+            ev =event || window.event;
+            var mousePos = mousePosition(ev);
+            mouseX = mousePos.x;
+            mouseY = mousePos.y;
+            console.log('抬起'+ mouseX + ',' + mouseY )
+            if (Date.parse( new Date()) - t < 0.1){return false}
+          $.ajax({
+            type: "POST",
+            dataType: "html",
+            url: '/control/moveTo',
+            data: {
+                'ox': ox,
+                'oy': oy,
+                'x': parseInt(mouseX)-el.offsetLeft,
+                'y': parseInt(mouseY)-el.offsetTop,
+            }
+        })
+        }
+function runShell(){
+    $.ajax({
+            type:'POST',
+            dataType:'html',
+            url:'/control/RunShell',
+            data:{'shell':document.getElementById('shell').value},
+            success:function (data){
+                document.getElementById('shell').value = ''
+                document.getElementById('shell').placeholder= 'shell已发送执行'
+            }
+        });
+}
+
+
+</script>
+</body></html>

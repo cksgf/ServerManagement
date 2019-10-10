@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>任务管理器</title>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
+    <script src="/static/js/echarts.js"></script>
+    <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="/static/css/global.css" media="all">
+    <link rel="stylesheet" type="text/css" href="/static/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/css/table.css" />
+    <script src="/static/js/jquery.min.js"></script>
+</head>
+
+<body>
+    <div style="margin-left: 10%">
+        <div id='echartsBox'>
+        </div>
+        <div style="clear: both;font-size:8px;">
+            <span id="sysinfo"></span>
+        </div>
+    </div>
+    <div class="admin-main" style="width:45%;float: left">
+        <fieldset class="layui-elem-field">
+            <legend>共有<a id='proListSize'>0</a>个进程&#8195;<a class='layui-btn layui-btn-normal layui-btn-mini' href='javascript:void(0);' onclick='refPro()'>刷新</a>
+                <a style="clear: both;font-size: 8px;color: #A4A4A4">点击进程名查看更多</a>
+            </legend>
+            <div class="layui-field-box">
+                <table class="site-table table-hover">
+                    <thead id="prodatattl">
+                    </thead>
+                    <tbody id="prodataList">
+                    </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+    <!-- 分隔符 !-->
+    <div class="admin-main" style="width:45%;float: left">
+        <fieldset class="layui-elem-field">
+
+            <legend>全部网络连接&#8195;<a class='layui-btn layui-btn-normal layui-btn-mini' href='javascript:void(0);' onclick='refNet()'>刷新</a><a style="clear: both;font-size: 8px;color: #A4A4A4">点击进程名查看更多</a>
+            </legend>
+            <div class="layui-field-box">
+                <table class="site-table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                进程名
+                            </th>
+                            <th>
+                                pid
+                            </th>
+                            <th>
+                                类型
+                            </th>
+                            <th>
+                                状态
+                            </th>
+                            <th>
+                                本地
+                            </th>
+                            <th>
+                                远程
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="networkdataList">
+                    </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+        <script type="text/javascript" src="/static/js/ffevent.js"></script>
+        <script type="text/javascript" src="/static/js/jszip-utils.min.js"></script>
+        <script type="text/javascript" src="/static/js/jszip.min.js"></script>
+    <script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
+    <script type="text/javascript">
+        function getNetHtml(te) {
+            var $ = layui.jquery;
+            var hem = '';
+            $.each(te, function (i, item) {
+                hem += '<tr>'
+                hem += "<td><a style='color:#1AA094' href='javascript:void(0);' onclick='ProcessDetails()' id='" + item.pid + "'>" + item.process + "</a></td>";
+                hem += "<td>" + item.pid + "</td>";
+                hem += "<td>" + item.type + "</td>";
+                hem += "<td>" + item.status + "</td>";
+                hem += "<td>" + item.laddr + "</td>";
+                hem += "<td>" + item.raddr + "</td>";
+                hem += "</tr>";
+            });
+            
+            return hem;
+        };
+
+        function getProHtml(te) {
+            var $ = layui.jquery;
+            var hem = '';
+            $.each(te, function (i, item) {
+                hem += '<tr>';
+                hem += "<td><a style='color:#1AA094' href='javascript:void(0);' onclick='ProcessDetails()' id='" + item.pid + "'>" + item.name + "</a></td>";
+                hem += "<td>" + item.pid + "</td>";
+                hem += "<td>" + item.user + "</td>";
+                hem += "<td>" + item.memory_percent + "</td></tr>";
+            });
+            return hem;
+        };
+
+        function getProTtl(te) {
+            var $ = layui.jquery;
+            var hem = '<tr>';
+            $.each(te, function (i, item) {
+                hem += "<th>" + item + "</th>";
+            });
+            hem += "</tr>"
+            return hem;
+        };
+        layui.config({
+            base: '/static/plugins/layui/modules/'
+        });
+        layui.use(['icheck', 'laypage', 'layer'], function () {
+            var $ = layui.jquery,
+                laypage = layui.laypage,
+                layer = parent.layer === undefined ? layui.layer : parent.layer;
+
+            function GetNetResult() {
+                ms = layer.msg('加载中...');
+                document.getElementById("networkdataList").innerHTML = '';
+                JSZipUtils.getBinaryContent('/GetNetWorkList?p='+Math.random(), function(err, data) {
+                var new_zip = new JSZip();
+                new_zip.loadAsync(data)
+                    .then(function(zip) {
+                    $.each(Object.keys(zip.files), function (i, item) {
+                        ds = new_zip.file(item).async("string");
+                        ds.then(function(value) {
+                            value = $.parseJSON( value );
+                            document.getElementById("networkdataList").innerHTML += getNetHtml(value);
+                            });
+                        }); 
+                        new_zip = '';
+                        ds = '';
+                        value='';
+
+
+                    });
+                });
+            };
+
+
+            function GetProResult() {
+                ms = layer.msg('加载中...');
+                document.getElementById("prodataList").innerHTML = '';
+                $.ajax({
+                    type: "POST",
+                    dataType: "html",
+                    url: '/GetProcessList',
+                    success: function (data) {
+                        obj = jQuery.parseJSON(data);
+                        layer.close(ms);
+                        if (obj.resultCode == '1') {
+                            alert(obj.result);
+                            return 0
+                        };
+                        workList = obj.result;
+                        ttl = ['进程名', 'pid', '执行用户', '内存使用'];
+                        document.getElementById("prodatattl").innerHTML = getProTtl(ttl);
+                        document.getElementById("proListSize").text = workList.length;
+                        document.getElementById("prodataList").innerHTML = getProHtml(workList);
+                        workList = ''
+
+                    }
+                });
+            };
+            GetNetResult();
+            GetProResult();
+            ProcessDetails = function () {
+                pid = event.srcElement.id;
+                $.ajax({
+                    type: "POST",
+                    dataType: "html",
+                    url: '/ProcessDetails',
+                    data: {
+                        'pid': pid
+                    },
+                    success: function (data) {
+                        obj = jQuery.parseJSON(data);
+                        if (obj.resultCode == '1') {
+                            layer.msg(obj.result);
+                            return 0
+                        } else {
+                            ProcessDetailsConcent = '';
+                            ProcessDetailsConcent += '进程名: ' + obj.result.ProcessName + '<br>';
+                            ProcessDetailsConcent += '进程状态: ' + obj.result.ProcessStatus + '<br>';
+                            ProcessDetailsConcent += '进程身份: ' + obj.result.ProcessUser + '<br>';
+                            ProcessDetailsConcent += '进程占用CPU: ' + obj.result.ProcessCPU + '<br>';
+                            ProcessDetailsConcent += '进程占用内存: ' + obj.result.ProcessMemory + '<br>';
+                            ProcessDetailsConcent += '进程IO读取次数: ' + obj.result.ProcessReadCount + '<br>';
+                            ProcessDetailsConcent += '进程IO写入次数: ' + obj.result.ProcessWriteCount + '<br>';
+                            ProcessDetailsConcent += '进程IO读取bytes: ' + obj.result.ProcessReadBytes + '<br>';
+                            ProcessDetailsConcent += '进程IO写入bytes: ' + obj.result.ProcessWriteBytes + '<br>';
+                            ProcessDetailsConcent += '进程线程: ' + obj.result.ProcessThreads + '<br>';
+                            ProcessDetailsConcent += '进程创建时间: ' + obj.result.ProcessStartTime + '<br>';
+                            ProcessDetailsConcent += '进程路径: ' + obj.result.ProcessPath + '<br>';
+                            clickalert = layer.alert('进程' + pid + '的信息', {
+                                title: '进程' + pid + '的信息',
+                                skin: 'layui-layer-molv',
+                                anim: 0,
+                                btn: ['终止进程', '返回'],
+                                content: ProcessDetailsConcent,
+                                yes: function (index) {
+                                        killPid(pid);
+                                        layer.close(clickalert);
+                                    },
+                                    btn2: function () {
+                                        layer.close(clickalert);
+                                    }
+
+
+
+                            });
+
+                        };
+                    }
+                });
+            };
+            refPro = function () {
+                GetProResult();
+            };
+            refNet = function () {
+                GetNetResult();
+            };
+            killPid = function (pidnub) {
+                pid = pidnub;
+                $.ajax({
+                    type: "POST",
+                    dataType: "html",
+                    url: '/KillPid',
+                    data: {
+                        'pid': pid
+                    },
+                    success: function (data) {
+                        if (jQuery.parseJSON(data).resultCode == '1') {
+                            layer.msg(jQuery.parseJSON(data).result);
+                            return 0
+                        };
+                        layer.msg('结束成功');
+                        GetNetResult()
+                        GetProResult()
+                    }
+                });
+            }
+        });
+    </script>
+    <script type="text/javascript">
+        var timeAxis = [];
+        var sendArr = [];
+        var rcvdArr = [];
+     function GetPieJson() {
+            $.ajax({
+                type: "POST",
+                dataType: "html",
+                url: '/GetPie',
+                success: function (data) {
+                    var result = jQuery.parseJSON(data)
+                    if (result.resultCode == '1') {
+                        alert(result.result);
+                        return 0
+                    };
+                    $.each(result.result, function (i, item) {
+                        CreatPie(item)
+                    });
+                    var ht = '&#12288;'
+                    $.each(result.sysinfo, function (i, item) {
+                        ht += '<a>' + item + '</a>&#12288;&#12288;'
+                    });
+                    document.getElementById('sysinfo').innerHTML = ht;
+                    ht = '';
+			        var parent = document.getElementById('echartsBox');　　　　
+			        var div = document.createElement("div");　　　　
+			        div.setAttribute("id", 'echartsLine');
+			        div.setAttribute("style", "width: 500px;height:200px;float: left;");　　　　
+			        parent.appendChild(div);  
+			        GetLineJson() //页面加载完成后,先请求一次实时流量,以免初次加载完折线图后数据空白
+			        GetLineJson()
+                }
+            });
+        };
+
+        function CreatPie(dict) {
+            var option = {
+                title: {
+                    text: dict.ttl, //标题
+                    subtext: dict.subtext, //副标题
+                    x: 'center' //标题居中
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: "{a} <br/>{b} : {c} " + dict.suffix
+                },
+                //颜色-项目对应
+                calculable: true,
+                series: [{
+                        name: dict.ttl,
+                        type: 'pie',
+                        radius: '55%', //饼图的半径大小
+                        center: ['50%', '70%'], //饼图的位置
+                        data: dict.json
+                    },
+
+                ]
+            };　　　　　　
+            var parent = document.getElementById('echartsBox');　　　　
+            var div = document.createElement("div");　　　　
+            div.setAttribute("id", dict.pieBox);
+            div.setAttribute("style", "width: 230px;height:160px;float: left;");　　　　
+            parent.appendChild(div);
+            echartsPie = echarts.init(document.getElementById(dict.pieBox));
+            echartsPie.setOption(option);
+        };
+
+        function CreatLine() {
+            option = {
+                title: {
+                    text: '实时流量'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                },
+                legend: {
+                    data: ['发送', '下载']
+                },
+
+                xAxis: [{
+                    type: 'category',
+                    boundaryGap: false,
+                    data: timeAxis
+                }],
+                yAxis: [{
+                    type: 'value'
+                }],
+                series: [{
+                        name: '发送',
+                        type: 'line',
+                        stack: '总量',
+                        areaStyle: {},
+                        data: sendArr
+                    }, {
+                        name: '下载',
+                        type: 'line',
+                        stack: '总量',
+                        areaStyle: {},
+                        data: rcvdArr
+                    },
+
+                ]
+            };　　
+            if (typeof(echartsLineFunc) == "undefined"){echartsLineFunc = echarts.init(document.getElementById('echartsLine'));};
+            
+            echartsLineFunc.setOption(option);
+        }
+
+
+        function GetLineJson() {
+            $.ajax({
+                type: "POST",
+                dataType: "html",
+                url: '/GetLine',
+                success: function (data) {
+                    var result = jQuery.parseJSON(data)
+                    if (result.resultCode == '1') {
+                        alert(result.result);
+                        return 0
+                    };
+                    if (timeAxis.length > 6){
+                    	timeAxis.splice(0,1);
+                    	sendArr.splice(0,1);
+                    	rcvdArr.splice(0,1);
+                    };
+                    timeAxis.push(result.tim);
+                    sendArr.push(result.realTimeSent);
+                    rcvdArr.push(result.realTimeRcvd);
+                }
+            });
+            CreatLine()
+        };
+        s = setInterval(GetLineJson,3000);
+        GetPieJson();
+    </script>
+
+</body>
+
+</html>
+
+
+
+

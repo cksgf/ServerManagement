@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>NGINX管理</title>
+	 <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+		<link rel="stylesheet" href="/static/css/begtable.css" />
+        <link rel="stylesheet" href="/static/codemirror/lib/codemirror.css">
+        <link rel="stylesheet" href="/static/codemirror/theme/dracula.css">
+	</head>
+
+	<body>
+          <blockquote class="layui-elem-quote">
+            MySQL管理<br>
+            关系型数据库管理系统,将数据保存在不同的表中,使用的SQL语言是用于访问数据库的最常用标准化语言。
+          </blockquote>
+			<div style="height: 500px;margin-left:5%">
+                <div id='nginxConf' style="display: none;">
+                    <textarea id="nginxConfCode" ></textarea>
+                </div>
+                <div style="margin-top:15px">
+                    <button class="layui-btn layui-btn" style="float:left;" onclick = "submit()">保存配置</button>
+                    <button class="layui-btn layui-btn" style="float:left;" onclick = "Mysql(0)">开启服务</button>
+                    <button class="layui-btn layui-btn" style="float:left;" onclick = "Mysql(1)">关闭服务</button>
+                    <button class="layui-btn layui-btn" style="float:left;" onclick = "Mysql(2)">重载配置</button>
+                    <button class="layui-btn layui-btn" style="float:left;" onclick = "Mysql(3)">重启服务</button>
+                    <button class="layui-btn layui-btn" style="float:left;" onclick = "Mysql(4)">查看状态</button>
+                    <br>
+                    <a style="float:left;margin-top:15px;color:#8181F7;clear:both" id="nginxStatus"></a>
+                </div>
+			</div>
+        <script src="/static/codemirror/lib/codemirror.js"></script>
+        <script src="/static/codemirror/Language/python.js"></script>
+        <script src="/static/js/jquery.min.js"></script>
+		<script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
+        <script type="text/javascript" src="/static/js/base64.js"></script>
+        <script type="text/javascript">
+            $.ajax({
+                type: "POST",
+                dataType: "html",
+                url: '/codeEdit',
+                data: {
+                    'path': 'L2V0Yy9teS5jbmY='
+                },
+                success: function (data) {
+                    resultCode = jQuery.parseJSON(data).resultCode;
+                    fileCode = jQuery.parseJSON(data).fileCode;
+                    if (resultCode == '1') {
+                        alert('读取文件出错,请返回重试!错误内容:' + fileCode);
+                        return false
+                    };
+                    document.getElementById("nginxConf").style.display = 'block';
+                    var encoding = jQuery.parseJSON(data).encoding;
+                    var fileName = jQuery.parseJSON(data).fileName;
+                    var editor = CodeMirror.fromTextArea(document.getElementById("nginxConfCode"), {
+                        mode: "text/x-python",
+                        lineNumbers: true,
+                        tabSize: 4,
+                        indentUnit: 4,
+                        theme: "dracula",
+                        lineWrapping: false,
+                        foldGutter: true,
+                        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                        fullScreen: false,
+                        matchBrackets: true,
+                        extraKeys: {
+                            "Ctrl-S": function () {
+                                submit()
+                            },
+                        }
+                    });
+                    editor.setValue(fileCode);
+                    var htmlWidth = document.body.clientWidth;
+                    editor.setSize(htmlWidth/1.1, 500);
+                    submit = function () {
+                        var editValues = editor.getValue();
+                        $.ajax({
+                            type: "POST",
+                            dataType: "html",
+                            url: '/saveEditCode',
+                            data: {
+                                'editValues': Base64.encode(editValues),
+                                'fileName': Base64.encode(fileName)
+                            },
+                            success: function (data) {
+                                resultCode = jQuery.parseJSON(data).resultCode;
+                                if (resultCode == '0') {
+                                    window.parent.layer.msg('保存成功');
+                                } else {
+                                    alert(jQuery.parseJSON(data).result);
+                                }
+                            }
+                        });
+
+
+                    }
+                    Mysql = function (types) {
+                        c = window.parent.layer.msg('处理中...');
+                        document.getElementById("nginxStatus").innerText = '处理中...'
+                        $.ajax({
+                            type: "POST",
+                            dataType: "html",
+                            url: '/plugins/mysql',
+                            data: {
+                                'types': types,
+                            },
+                            success: function (data) {
+                                window.parent.layer.close(c)
+                                resultCode = jQuery.parseJSON(data).resultCode;
+                                if (resultCode == '0') {
+                                    document.getElementById("nginxStatus").innerText = jQuery.parseJSON(data).result
+                                } else {
+                                    alert(jQuery.parseJSON(data).result);
+                                }
+                            }
+                        });
+                        if (types === 0){setTimeout('Mysql(4)',5000)}
+
+
+                    }
+Mysql(4)
+                }
+
+            });
+        </script>
+	</body>
+
+</html>

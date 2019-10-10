@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>文件管理器</title>
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="/static/css/global.css" media="all">
+    <link rel="stylesheet" type="text/css" href="/static/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/css/table.css" />
+    <script src="/static/js/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="admin-main">
+        <fieldset class="layui-elem-field">
+            <div class="layui-field-box">
+            <blockquote class="layui-elem-quote">
+            这里可以提供一个类似于网盘的文件分享的功能,让你或其他人快捷下载文件
+            <br>
+            你可以在文件管理器中点击【分享】,来将文件分享到这里
+          </blockquote>
+                <table class="site-table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                文件名
+                            </th>
+                            <th>
+                                大小
+                            </th>
+                            <th>
+                                提取码
+                            </th>
+                            <th>
+                                分享链接
+                            </th>
+                            <th>
+                                操作
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataList">
+                    </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+
+    <script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
+    <script type="text/javascript">
+        getHtml = function () {
+            var $ = layui.jquery;
+            $("tbody[id='dataList']").html("")
+            var alldata = []
+            var hem = '';
+            $.ajax({
+                type: "POST",
+                dataType: "html",
+                url: '/getFileShare',
+                success: function (data) {
+                    alldata = jQuery.parseJSON(data).result;
+                    $.each(alldata, function (i, item) {
+                        hem += '<tr>';
+                        hem += "<td><a onclick='showAllPath(\""+ item. filepath+"\")'>" + item.filename+ "</a></td>";
+                        hem += "<td>" + item.filesize+ "</td>";
+                        hem += "<td>" + item.vie+ "</td>";
+                        hem += "<td>" + window.location.host+'/FileShare?ids='+item.ids+ "</td>";
+                        hem += "<td>"
+                        hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-mini'  href='javascript:void(0);' onclick='Delete(\""+ item. ids+"\")'>删除</a>";
+                        hem += "</td></tr>";
+                    });
+                    $("tbody[id='dataList']").html(hem)
+                }
+            });
+        };
+        layui.config({
+            base: '/static/plugins/layui/modules/'
+        });
+        layui.use(['icheck', 'laypage', 'layer'], function () {
+            var files = '';
+            var $ = layui.jquery,
+                laypage = layui.laypage,
+                layer = parent.layer === undefined ? layui.layer : parent.layer;
+            $('input').iCheck({
+                checkboxClass: 'icheckbox_flat-green'
+            });
+
+ getHtml();
+ showAllPath = function(paths){
+    layer.alert(paths)
+ }
+
+            Delete = function (ids) {
+
+                clickfilename = event.srcElement.id;
+                clickalert = layer.alert('真的要删除吗', {
+                    skin: 'layui-layer-molv' //样式类名  自定义样式
+                    ,
+                    closeBtn: 1 // 是否显示关闭按钮
+                    ,
+                    anim: 0 //动画类型
+                    ,
+                    btn: ['确定', '取消'] //按钮
+                    ,
+                    icon: 0 // icon
+                    ,
+                    yes: function () {
+                        $.ajax({
+                            type: "POST",
+                            dataType: "html",
+                            url: '/deleteFileShare',
+                            data: {
+                                'ids': ids
+                            },
+                            success: function (data) {
+                                layer.msg('删除成功')
+                                getHtml()
+                            }
+                        });
+                        layer.close(clickalert);
+                    }, btn2: function () {
+                        layer.msg('删除取消');
+                    }
+                });
+            };
+
+
+        });
+    </script>
+</body>
+</html>

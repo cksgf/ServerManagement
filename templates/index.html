@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>文瑞服务器管理</title>
+		<link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
+		<link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
+		<link rel="stylesheet" href="/static/css/global.css" media="all">
+		<link rel="stylesheet" type="text/css" href="/static/css/font-awesome.min.css">
+
+	</head>
+
+	<body>
+		<div class="layui-layout layui-layout-admin">
+			<div class="layui-header header header-demo">
+				<div class="layui-main">
+					<div class="admin-login-box">
+						<a class="logo" style="left: 0;" href="#">
+							<span >欢迎使用文瑞服务器管理工具</span>
+							<span >welcome!</span>
+						</a>
+						<div class="admin-side-toggle">
+							<i class="fa fa-bars" aria-hidden="true"></i>
+						</div>
+					</div>
+
+
+				</div>
+			</div>
+			<div class="layui-side layui-bg-black" id="admin-side">
+				<div class="layui-side-scroll" id="admin-navbar-side" lay-filter="side"></div>
+			</div>
+			<div class="layui-body" style="bottom: 0;border-left: solid 2px #1AA094;" id="admin-body">
+				<div class="layui-tab admin-nav-card layui-tab-brief" lay-filter="admin-tab">
+					<ul class="layui-tab-title">
+						<li class="layui-this">
+							<i class="fa fa-dashboard" aria-hidden="true"></i>
+							<cite>控制面板</cite>
+						</li>
+					</ul>
+					<div class="layui-tab-content" style="min-height: 150px; padding: 5px 0 0 0;">
+						<div class="layui-tab-item layui-show">
+							<iframe src="/ControlPanel"></iframe>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="layui-footer footer footer-demo" id="admin-footer">
+				<div class="layui-main">
+					<p>2018 &copy;
+						<a href="#">文瑞服务器管理工具</a> domo
+					</p>
+				</div>
+			</div>
+    <script type="text/javascript" src="/static/js/ffevent.js"></script>
+			<script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
+			<script src="/static/js/jquery.min.js"></script>
+			<script type="text/javascript">
+			navs={{url|safe}}
+			//$.ajax({type:'POST',dataType:'html',url:'/',success:function(data) {navs = jQuery.parseJSON(data)}})
+			</script>
+
+			<script src="/static/js/index.js"></script>
+		</div>
+	</body>
+
+</html>
