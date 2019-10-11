@@ -348,7 +348,7 @@ def getFileShare():
 def FileShare():
     ids=request.values.get('ids')
     sqlresult = sql.getShareFileInfo(ids)
-    return render_template("downFileShare.html",needvie = ('yes' if sqlresult[2] !='' else 'no'),filename=os.path.split(sqlresult[1])[1],ids=ids)
+    return render_template("downFileShare.html",needvie = ('yes' if sqlresult[2] !='' else 'no'),filename=os.path.split(sqlresult[1])[1],ids=ids,filesize=getFileSize(sqlresult[1]))
 #下载
 @app.route('/DownFileShare',methods=['GET'])
 def DownFileShare():
