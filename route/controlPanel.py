@@ -6,10 +6,6 @@ from config.config import visitDay
 import platform,datetime,psutil,re,requests
 import socket
 from .login import cklogin
-url.append({
-        "title": "控制面板",
-        "href": "#"
-    })
 NAThost = '未获取'
 netIP = '未获取'
 PCname = socket.gethostname()

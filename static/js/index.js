@@ -1,8 +1,8 @@
 layui.config({
 	base: '/static/js/'
 }).use(['element', 'layer', 'navbar', 'tab'], function() {
-	var element = layui.element(),
-		$ = layui.jquery,
+	var element = layui.element()
+	var	$ = layui.jquery,
 		layer = layui.layer,
 		navbar = layui.navbar(),
 		tab = layui.tab({

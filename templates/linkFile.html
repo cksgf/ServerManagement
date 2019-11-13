@@ -9,7 +9,7 @@
             然后,一键直达~
           </blockquote>
           <fieldset class="layui-elem-field layui-field-title">
-            <legend><button class='layui-btn layui-btn-normal layui-btn-mini'  onclick="createButton()">新增文件</button></legend>
+            <legend><button class='layui-btn layui-btn-normal layui-btn-sm'  onclick="createButton()">新增文件</button></legend>
           </fieldset>
           <table class="layui-table" lay-even="" lay-skin="row" style="margin-left: 45px">
           <colgroup>
@@ -130,7 +130,7 @@
                             linkFileList=jQuery.parseJSON(data).result.reverse()
                             $.each(linkFileList, function (i, item) {
                               ht+='<tr>'
-                              ht+='<td><button class="layui-btn layui-btn-small" id = '+ item[0] +' onclick="clickLinkFile()" style="width:100px">'+item[1]+'</button></td>'
+                              ht+='<td><button class="layui-btn layui-btn-sm" id = '+ item[0] +' onclick="clickLinkFile()" style="width:100px">'+item[1]+'</button></td>'
                               ht+='<td>'+item[2]+'</td>'
                               ht+='<td>'+item[3]+'</td>'
                               ht+='<td> <a style="color:#1AA094" href="javascript:void(0);" onclick=\'layer.alert("文件位于：<br>'+item[5]+'",{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]})\'>'+item[5]+'</a></td>'

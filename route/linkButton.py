@@ -9,8 +9,8 @@ from .login import cklogin
 url.append( {
         "title": "快捷操作",
         "children": [
-        {"title": "● 快捷按钮","href": "/linkButton"},
-        {"title": "● 快捷文件","href": "/linkFile"},
+        {"title": "快捷按钮","href": "/linkButton"},
+        {"title": "快捷文件","href": "/linkFile"},
         ]
     })
 @app.route('/linkButton',methods=['GET','POST'])

@@ -14,8 +14,8 @@ from config.config import workPath
 from .login import cklogin
 url.append( {"title": "文件管理",
     "children": [
-        {"title": "● 文件管理器","href": "/file"},
-        {"title": "● 文件分享","href": "/getFileShare"}
+        {"title": "文件管理器","href": "/file"},
+        {"title": "文件分享","href": "/getFileShare"}
         ]
     })
 sep=os.path.sep          #当前系统分隔符

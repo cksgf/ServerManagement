@@ -1,67 +1,108 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8">
-		<title>文瑞服务器管理</title>
-		<link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
-		<link rel="stylesheet" href="/static/plugins/layui/css/layui.css" media="all" />
-		<link rel="stylesheet" href="/static/css/global.css" media="all">
-		<link rel="stylesheet" type="text/css" href="/static/css/font-awesome.min.css">
+<!doctype html>
+<html class="x-admin-sm">
+    <head>
+        <meta charset="UTF-8">
+        <title>后台登录</title>
+        <meta name="renderer" content="webkit|ie-comp|ie-stand">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+        <meta http-equiv="Cache-Control" content="no-siteapp" />
+        <link rel="stylesheet" href="/static/css/font.css">
+        <link rel="stylesheet" href="/static/css/xadmin.css">
+        <script src="/static/plugins/layui/layui.js" charset="utf-8"></script>
+               <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+        <script type="text/javascript" src="/static/js/xadmin.js"></script>
+        <script>
+            var is_remember = false;//刷新记忆
+        </script>
+    </head>
+    <body class="index">
+        <!-- 顶部开始 -->
+        <div class="container">
+            <div class="logo">
+                <a style="font-size: 15px">欢迎使用文瑞管理工具</a></div>
+                <ul class="layui-nav right">
+                	<li class="layui-nav-item to-index"><a href="/loginout">退出登录</a> </li>
+                	<span class="layui-nav-bar" style="left: 136.688px; top: 40px; width: 0px; opacity: 0;"></span>	
+                </ul>
+        
+        </div>
+        <!-- 顶部结束 -->
+        <!-- 中部开始 -->
+        <!-- 左侧菜单开始 -->
+        <div class="left-nav ">
+            <div id="side-nav">
+                <ul id="nav">
+  
 
-	</head>
+           
+                </ul>
+            </div>
+        </div>
+        <!-- <div class="x-slide_left"></div> -->
+        <!-- 左侧菜单结束 -->
+        <!-- 右侧主体开始 -->
+        <div class="page-content">
+            <div class="layui-tab tab" lay-filter="xbs_tab" lay-allowclose="false">
+                <ul class="layui-tab-title">
+                    <li class="home">
+                        <i class="layui-icon">&#xe6a2;</i>控制面板</li></ul>
+                <div class="layui-unselect layui-form-select layui-form-selected" id="tab_right">
+                    <dl>
+                        <dd data-type="this">关闭当前</dd>
+                        <dd data-type="other">关闭其它</dd>
+                        <dd data-type="all">关闭全部</dd></dl>
+                </div>
+                <div class="layui-tab-content">
+                    <div class="layui-tab-item layui-show">
+                        <iframe src='/ControlPanel' frameborder="0" scrolling="yes" class="x-iframe"></iframe>
+                    </div>
+                </div>
+                <div id="tab_show"></div>
+            </div>
+        </div>
 
-	<body>
-		<div class="layui-layout layui-layout-admin">
-			<div class="layui-header header header-demo">
-				<div class="layui-main">
-					<div class="admin-login-box">
-						<a class="logo" style="left: 0;" href="#">
-							<span >欢迎使用文瑞服务器管理工具</span>
-							<span >welcome!</span>
-						</a>
-						<div class="admin-side-toggle">
-							<i class="fa fa-bars" aria-hidden="true"></i>
-						</div>
-					</div>
+        <div class="page-content-bg"></div>
+
+        <style id="theme_style"></style>
+        <!-- 右侧主体结束 -->
+        <!-- 中部结束 -->
+        <script type="text/javascript">
+        	navs={{url|safe}}
+        	var tabStr = ''
+        	for (var i = 0; i < navs.length; i++) {
+        		nd = navs[i]
+        		var strVar = "";
+        		if(typeof(nd.children)=="undefined"){
+				    strVar += "   <li>\n";
+				    strVar += "       <a onclick=\"xadmin.add_tab('"+nd.title+"','"+nd.href+"')\">\n";
+				    strVar += "           <cite>&#12288;"+nd.title+"<\/cite><\/a>\n";
+				    strVar += "   <\/li>\n";
+
+        		}
+        		else{
+				    strVar += "   <li>\n";
+				    strVar += "       <a href=\"javascript:;\">\n";
+				    strVar += "           \n";
+				    strVar += "           <cite>&#12288;"+nd.title+"<i style='float:right' class=\"iconfont\">&#xe6a7;<\/i><\/cite><\/a>\n";
+				    strVar += "           <ul class=\"sub-menu\">\n";
+				    for (var c = 0; c < nd.children.length; c++) {
+				    	nc = nd.children[c]
+				    	strVar += "               <li>\n";
+					    strVar += "                   <a onclick=\"xadmin.add_tab('"+nc.title+"','"+nc.href+"')\">\n";
+					    strVar += "                       <i class=\"iconfont\">&#xe6a7;<\/i>\n";
+					    strVar += "                       <cite>"+nc.title+"<\/cite><\/a>\n";
+					    strVar += "               <\/li>\n";
+				    }
+				    strVar += "           <\/ul>\n";
+				    strVar += "   <\/li> \n";
+        		}
+        		tabStr+=strVar
+        	}
+        	document.getElementById("nav").innerHTML = tabStr;
 
 
-				</div>
-			</div>
-			<div class="layui-side layui-bg-black" id="admin-side">
-				<div class="layui-side-scroll" id="admin-navbar-side" lay-filter="side"></div>
-			</div>
-			<div class="layui-body" style="bottom: 0;border-left: solid 2px #1AA094;" id="admin-body">
-				<div class="layui-tab admin-nav-card layui-tab-brief" lay-filter="admin-tab">
-					<ul class="layui-tab-title">
-						<li class="layui-this">
-							<i class="fa fa-dashboard" aria-hidden="true"></i>
-							<cite>控制面板</cite>
-						</li>
-					</ul>
-					<div class="layui-tab-content" style="min-height: 150px; padding: 5px 0 0 0;">
-						<div class="layui-tab-item layui-show">
-							<iframe src="/ControlPanel"></iframe>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="layui-footer footer footer-demo" id="admin-footer">
-				<div class="layui-main">
-					<p>2018 &copy;
-						<a href="#">文瑞服务器管理工具</a> domo
-					</p>
-				</div>
-			</div>
-    <script type="text/javascript" src="/static/js/ffevent.js"></script>
-			<script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
-			<script src="/static/js/jquery.min.js"></script>
-			<script type="text/javascript">
-			navs={{url|safe}}
-			//$.ajax({type:'POST',dataType:'html',url:'/',success:function(data) {navs = jQuery.parseJSON(data)}})
-			</script>
 
-			<script src="/static/js/index.js"></script>
-		</div>
-	</body>
-
+    </script>
+    </body>
 </html>

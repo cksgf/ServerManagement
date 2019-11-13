@@ -15,31 +15,31 @@
 <body>
     <div class="admin-main">
         <blockquote class="layui-elem-quote">
-            <a href='javascript:void(0);' onclick='javascript:document.getElementById("UploadInput").click();' class="layui-btn layui-btn-small">
+            <a href='javascript:void(0);' onclick='javascript:document.getElementById("UploadInput").click();' class="layui-btn layui-btn-sm">
                 <i class="layui-icon"></i> 上传文件
             </a>
-            <a href='javascript:void(0);' onclick='CreateFile()' class="layui-btn layui-btn-small">
+            <a href='javascript:void(0);' onclick='CreateFile()' class="layui-btn layui-btn-sm">
                 <i class="layui-icon"></i> 创建文件
             </a>
-            <a href='javascript:void(0);' onclick='CreateDir()' class="layui-btn layui-btn-small">
+            <a href='javascript:void(0);' onclick='CreateDir()' class="layui-btn layui-btn-sm">
                 <i class="layui-icon"></i> 创建目录
             </a>
 
-            <select name="batch" id="batch" class="layui-btn layui-btn-small" onchange="batch()">
+            <select name="batch" id="batch" class="layui-btn layui-btn-sm" onchange="batch()">
                 <option id='ransda' selected="true" disabled="true">批量操作</option>
                 <option value="delete">批量删除</option>
                 <option value="cut">剪切并粘贴</option>
                 <option value="copy">复制并粘贴</option>
                 <option value="zip">压缩至此</option>
             </select>
-             <a href='javascript:void(0);' onclick='ChangePath()' class="layui-btn layui-btn-small">
+             <a href='javascript:void(0);' onclick='ChangePath()' class="layui-btn layui-btn-sm">
                 <i class="layui-icon"></i> 跳转
             </a>
             <a style="margin-left:30px">当前路径</a>
             <a id='fileRoute' style="margin-left:10px"></a>
         </blockquote>
         <fieldset class="layui-elem-field">
-            <legend>共有<a id='fileQuantity'>0</a>个文件&#8195;<a style="font-size: 10px" class='layui-btn layui-btn-normal layui-btn-mini' id='already' onclick="alertSelectList()">已选中0个文件</a>
+            <legend>共有<a id='fileQuantity'>0</a>个文件&#8195;<a style="font-size: 10px" class='layui-btn layui-btn-normal layui-btn-sm' id='already' onclick="alertSelectList()">已选中0个文件</a>
             </legend>
             <div class="layui-field-box">
                 <table class="site-table table-hover">
@@ -138,19 +138,19 @@
 
                 if (item.fileType != 'dir') {
                     if (filetypes == 'pic') {
-                        hem += "&#12288;<a class='layui-btn layui-btn-mini'  href='javascript:void(0);' onclick='visit()' id='" + item.fileName + "'>预览</a>&#12288;";
+                        hem += "&#12288;<a class='layui-btn layui-btn-sm'  href='javascript:void(0);' onclick='visit()' id='" + item.fileName + "'>预览</a>&#12288;";
                     }
-                    hem += "<a class='layui-btn layui-btn-mini' href='javascript:void(0);' onclick='codeEdit()' id='" + item.fileName + "'>编辑</a>";
-                    hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-mini'  href='javascript:void(0);' onclick='DownFile()' id='" + item.fileName + "'>下载</a>";
-                hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-mini'  href='javascript:void(0);' onclick='fileShare()' id='" + item.fileName + "'>分享</a>";
+                    hem += "<a class='layui-btn layui-btn-sm' href='javascript:void(0);' onclick='codeEdit()' id='" + item.fileName + "'>编辑</a>";
+                    hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-sm'  href='javascript:void(0);' onclick='DownFile()' id='" + item.fileName + "'>下载</a>";
+                hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-sm'  href='javascript:void(0);' onclick='fileShare()' id='" + item.fileName + "'>分享</a>";
                 } else {
-                    hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-mini'  href='javascript:void(0);' onclick='DownFile()' id='" + item.fileName + "'>下载</a>";
+                    hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-sm'  href='javascript:void(0);' onclick='DownFile()' id='" + item.fileName + "'>下载</a>";
                 };
-                hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-mini'  href='javascript:void(0);' onclick='RenameFile()' id='" + item.fileName + "'>重命名</a>";
-                hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-mini'  href='javascript:void(0);' onclick='Delete()' id='" + item.fileName + "'>删除</a>";
+                hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-sm'  href='javascript:void(0);' onclick='RenameFile()' id='" + item.fileName + "'>重命名</a>";
+                hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-sm'  href='javascript:void(0);' onclick='Delete()' id='" + item.fileName + "'>删除</a>";
 
                 if (filetypes == 'zip') {
-                    hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-mini'  href='javascript:void(0);' onclick='Extract()' id='" + item.fileName + "'>解压</a>";
+                    hem += "&#12288;<a class='layui-btn layui-btn-normal layui-btn-sm'  href='javascript:void(0);' onclick='Extract()' id='" + item.fileName + "'>解压</a>";
                 };
                 hem += "</tr></td>";
             });
@@ -161,9 +161,9 @@
         });
         layui.use(['icheck', 'laypage', 'layer'], function () {
             var files = '';
-            var $ = layui.jquery,
-                laypage = layui.laypage,
-                layer = parent.layer === undefined ? layui.layer : parent.layer;
+            var $ = layui.jquery
+            var laypage = layui.laypage
+            var layer = parent.layer === undefined ? layui.layer : parent.layer;
             $('input').iCheck({
                 checkboxClass: 'icheckbox_flat-green'
             });

@@ -9,8 +9,8 @@
     <link rel="stylesheet" type="text/css" href="/static/css/font-awesome.min.css">
 </head>
 
-<body style="background: #EFF8FB;">
-    <div style="width: 45%;height: 300px;float: left;margin-top: 20px;margin-left: 20px;background:#fff">
+<body >
+    <div style="width: 45%;height: 300px;float: left;margin-top: 20px;margin-left: 20px;background:#F2F2F2">
     	<div style="float: left;margin-top: 20px;">
         <form class="layui-form" action="">
             <div class="layui-form-item layui-form-text">
@@ -22,7 +22,7 @@
             <div class="layui-form-item layui-form-text">
                 <label class="layui-form-label">显示x天:</label>
                 <div class="layui-input-inline">
-                    <input type="number" name="visitDay" lay-verify="number" autocomplete="off" class="layui-input" value='{{visitDay}}'>
+                    <input type="number"  name="visitDay" lay-verify="number" autocomplete="off" class="layui-input" value='{{visitDay}}'>
                 </div>
             </div>
             <div class="layui-form-item layui-form-text">
@@ -42,7 +42,7 @@
             <div class="layui-form-item layui-form-text">
                 <label class="layui-form-label"></label>
                 <div class="layui-input-inline">
-                    <button class="layui-btn" lay-submit="" lay-filter="ControlConfig">立即提交</button>
+                    <button class="layui-btn layui-btn-sm" lay-submit="" lay-filter="ControlConfig">立即提交</button>
                 </div>
             </div>
         </form>
@@ -191,7 +191,7 @@
                 },
 
             ],
-            backgroundColor: '#FFFFFF',
+            backgroundColor: '#F2F2F2',
             color: ['#BE81F7', '#C8FE2E'],
             dataZoom: [{
                 start: 85,
@@ -236,7 +236,7 @@
                 data: cpu.used
             }],
             color: '#FE2EC8',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: '#F2F2F2',
             dataZoom: [{
                 start: 85,
                 end: 100,
@@ -280,7 +280,7 @@
 
             ],
             color: '#00FF00',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: '#F2F2F2',
             dataZoom: [{
                 start: 85,
                 end: 100,
