@@ -35,4 +35,4 @@ if __name__ == '__main__':
             t=Thread(target=main_slaver, args=(connectIP,'127.0.0.1:'+str(port),pwd))
             t.setDaemon(True)
             t.start()
-    app.run(host='0.0.0.0',port=port,debug = True)
+    app.run(host='0.0.0.0',port=port,debug = False)
