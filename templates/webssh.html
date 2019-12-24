@@ -58,7 +58,7 @@
 
             <div class="layui-form-item">
                 <div class="layui-input-block">
-                    <button class="layui-btn" lay-submit="" lay-filter="sshlogin">登陆</button>
+                    <a onclick="loginForSSH()" class="layui-btn" >登陆</a>
                     <button type="reset" id="sshlogin" class="layui-btn layui-btn-primary">清空</button>
                 </div>
             </div>
@@ -72,20 +72,18 @@
         <script src="/static/js/xterm.min.js"></script>
     <script type="text/javascript" src="/static/js/ffevent.js"></script>
 <script>
-    var ids='';
-            layui.use(['form', 'layedit', 'laydate'], function () {
-                var form = layui.form(),
-                    layer = layui.layer,
-                    layedit = layui.layedit,
-                    laydate = layui.laydate;
-                var $ = layui.jquery;
-                form.on('submit(sshlogin)', function (data) {
-                    data = data.field;
+                var ids='';
+                loginForSSH = function () {
                     $.ajax({
                         url: '/ssh',
                         dataType: "html",
                         type: "POST",
-                        data: data,
+                        data: {
+				                'host' : $("input[name='host']").val(),
+				                'port' :$("input[name='port']").val(),
+				                'username' :$("input[name='username']").val(),
+				                'pwd': $("input[name='pwd']").val()
+                        },
                         success: function (data) {
                             resultCode = jQuery.parseJSON(data).resultCode;
                             if (resultCode == '0') {
@@ -127,14 +125,14 @@
                                 getSSHResult = setInterval(getResult,100);
 
                             } else {
-                                layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]})
+                                alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]})
                             };
                         }
                     })
 
                     return false;
-                });
-            });
+                };
+
 </script>
 
 </html>
