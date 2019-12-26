@@ -10,19 +10,19 @@
 </head>
 
 <body >
-    <div style="width: 45%;height: 300px;float: left;margin-top: 20px;margin-left: 20px;background:#F2F2F2">
-    	<div style="float: left;margin-top: 20px;">
+    <div style="width: 45%;height: 300px;float: left;margin-top: 20px;margin-left: 20px;background:#fff">
+        <div style="float: left;margin-top: 20px;">
         <form class="layui-form" action="">
             <div class="layui-form-item layui-form-text">
                 <div class="layui-input-inline">
                     <label class="layui-form-label">开启监控:</label>
-                    <a class="layui-btn layui-btn-sm"  id='state' onclick="switchclick()"></a>
+                    <input type="checkbox" {{state|safe}} name="state" id='state' lay-skin="switch" lay-filter="switch" title="开启监控">
                 </div>
             </div>
             <div class="layui-form-item layui-form-text">
                 <label class="layui-form-label">显示x天:</label>
                 <div class="layui-input-inline">
-                    <input type="number"  name="visitDay" lay-verify="number" autocomplete="off" class="layui-input" value='{{visitDay}}'>
+                    <input type="number" name="visitDay" lay-verify="number" autocomplete="off" class="layui-input" value='{{visitDay}}'>
                 </div>
             </div>
             <div class="layui-form-item layui-form-text">
@@ -42,16 +42,16 @@
             <div class="layui-form-item layui-form-text">
                 <label class="layui-form-label"></label>
                 <div class="layui-input-inline">
-                    <a class="layui-btn layui-btn-sm" onclick="ControlConfig()">立即提交</a>
+                    <button class="layui-btn" lay-submit="" lay-filter="ControlConfig">立即提交</button>
                 </div>
             </div>
         </form>
         </div>
         <div style="float: right;margin-right: 60px;margin-top: 45px;width:300px;">
-        	<a>计算机名: &emsp; {{PCname}}</a><br><br>
-        	<a>内网IP: &emsp;&emsp; {{NATHOST}}</a><br><br>
-        	<a>外网IP:&emsp; &emsp; {{NETHOST}}</a><br><br>
-        	<a>开机时间: &emsp; {{bootTime}}</a><br><br>
+            <a>计算机名: &emsp; {{PCname}}</a><br><br>
+            <a>内网IP: &emsp;&emsp; {{NATHOST}}</a><br><br>
+            <a>外网IP:&emsp; &emsp; {{NETHOST}}</a><br><br>
+            <a>开机时间: &emsp; {{bootTime}}</a><br><br>
             <a style = 'word-wrap:break-word'>系统名称: &emsp; {{platform}}</a><br><br>
         </div>
     </div>
@@ -64,26 +64,19 @@
 <script src="/static/js/jquery.min.js"></script>
 <script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
 <script>
-	if("{{state}}"=="T"){
-		$("a[id='state']").html("已开启")
-	}
-	else{$("a[id='state']").html("已关闭")}
-    layui.use(['layer'], function () {
-        var layer = layui.layer
-        var $ = layui.jquery
-        ControlConfig = function () {
-            
+    layui.use(['form', 'layedit', 'laydate'], function () {
+        var form = layui.form,
+            layer = layui.layer,
+            layedit = layui.layedit,
+            laydate = layui.laydate;
+        var $ = layui.jquery;
+        form.on('submit(ControlConfig)', function (data) {
+            data = data.field;
             $.ajax({
                 url: '/ControlPanelConfig',
                 dataType: "html",
                 type: "POST",
-                data: {
-                	"visitDay":$("input[name='visitDay']").val(),
-                	"inv":$("input[name='inv']").val(),
-                	"saveDay":$("input[name='saveDay']").val()
-
-
-                },
+                data: data,
                 success: function (data) {
                     resultCode = jQuery.parseJSON(data).resultCode;
                     if (resultCode == '1') {
@@ -95,14 +88,14 @@
             })
 
             return false;
-        };
-        switchclick = function(){
+        });
+        form.on('switch(switch)', function (data) {
             $.ajax({
                 url: '/ControlPanelConfig',
                 dataType: "html",
                 type: "POST",
                 data: {
-                    'state': "{{state}}"
+                    'state': document.getElementById("state").checked
                 },
                 success: function (data) {
                     resultCode = jQuery.parseJSON(data).resultCode;
@@ -113,7 +106,7 @@
                 }
             })
 
-        }
+        });
     });
 </script>
 <script type="text/javascript">
@@ -198,7 +191,7 @@
                 },
 
             ],
-            backgroundColor: '#F2F2F2',
+            backgroundColor: '#FFFFFF',
             color: ['#BE81F7', '#C8FE2E'],
             dataZoom: [{
                 start: 85,
@@ -243,7 +236,7 @@
                 data: cpu.used
             }],
             color: '#FE2EC8',
-            backgroundColor: '#F2F2F2',
+            backgroundColor: '#FFFFFF',
             dataZoom: [{
                 start: 85,
                 end: 100,
@@ -287,7 +280,7 @@
 
             ],
             color: '#00FF00',
-            backgroundColor: '#F2F2F2',
+            backgroundColor: '#FFFFFF',
             dataZoom: [{
                 start: 85,
                 end: 100,
