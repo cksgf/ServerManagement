@@ -16,7 +16,7 @@
             <div class="layui-form-item layui-form-text">
                 <div class="layui-input-inline">
                     <label class="layui-form-label">开启监控:</label>
-                    <input type="checkbox" {{state|safe}} name="state" id='state' lay-skin="switch" lay-filter="switch" title="开启监控">
+                    <a class="layui-btn layui-btn-sm"  id='state' onclick="switchclick()"></a>
                 </div>
             </div>
             <div class="layui-form-item layui-form-text">
@@ -42,7 +42,7 @@
             <div class="layui-form-item layui-form-text">
                 <label class="layui-form-label"></label>
                 <div class="layui-input-inline">
-                    <button class="layui-btn layui-btn-sm" lay-submit="" lay-filter="ControlConfig">立即提交</button>
+                    <a class="layui-btn layui-btn-sm" onclick="ControlConfig()">立即提交</a>
                 </div>
             </div>
         </form>
@@ -64,19 +64,26 @@
 <script src="/static/js/jquery.min.js"></script>
 <script type="text/javascript" src="/static/plugins/layui/layui.js"></script>
 <script>
-    layui.use(['form', 'layedit', 'laydate'], function () {
-        var form = layui.form(),
-            layer = layui.layer,
-            layedit = layui.layedit,
-            laydate = layui.laydate;
-        var $ = layui.jquery;
-        form.on('submit(ControlConfig)', function (data) {
-            data = data.field;
+	if("{{state}}"=="T"){
+		$("a[id='state']").html("已开启")
+	}
+	else{$("a[id='state']").html("已关闭")}
+    layui.use(['layer'], function () {
+        var layer = layui.layer
+        var $ = layui.jquery
+        ControlConfig = function () {
+            
             $.ajax({
                 url: '/ControlPanelConfig',
                 dataType: "html",
                 type: "POST",
-                data: data,
+                data: {
+                	"visitDay":$("input[name='visitDay']").val(),
+                	"inv":$("input[name='inv']").val(),
+                	"saveDay":$("input[name='saveDay']").val()
+
+
+                },
                 success: function (data) {
                     resultCode = jQuery.parseJSON(data).resultCode;
                     if (resultCode == '1') {
@@ -88,14 +95,14 @@
             })
 
             return false;
-        });
-        form.on('switch(switch)', function (data) {
+        };
+        switchclick = function(){
             $.ajax({
                 url: '/ControlPanelConfig',
                 dataType: "html",
                 type: "POST",
                 data: {
-                    'state': document.getElementById("state").checked
+                    'state': "{{state}}"
                 },
                 success: function (data) {
                     resultCode = jQuery.parseJSON(data).resultCode;
@@ -106,7 +113,7 @@
                 }
             })
 
-        });
+        }
     });
 </script>
 <script type="text/javascript">
