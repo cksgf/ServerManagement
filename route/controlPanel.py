@@ -32,7 +32,7 @@ def ControlPanel():
         return render_template('ControlPanel.html',
             inv = ResTask.inv,
             saveDay=ResTask.saveDay,
-            state = ('checked=""' if ResTask.state else ''),
+            state = ('T' if ResTask.state else 'F'),
             visitDay = visitDay,
             platform = platform.platform(),
             NETHOST = netIP,
@@ -69,7 +69,8 @@ def ControlPanelConfig():
         if saveDay < 1 :
             return json.dumps({'resultCode':1,'result':'最少储存一天,或者您可以选择关闭此功能'})
         ResTask.saveDay=saveDay
-    ResTask.state=(True if (state == 'on') or (state == 'true') else False)
+    if ResTask:
+        ResTask.state=(True if (state == 'F') else False)
     return json.dumps({'resultCode':0,'result':'success'})
 
 
