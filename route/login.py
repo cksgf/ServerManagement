@@ -3,7 +3,7 @@ import json
 from functools import wraps
 from flask import request,render_template,redirect,url_for,session
 from config.config import username,password
-pwd={}
+
 #验证登录的修饰器
 def cklogin(**kw):
     def ck(func):
