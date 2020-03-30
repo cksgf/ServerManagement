@@ -139,7 +139,17 @@
                   }
               });
             };
+runLinkButtonShell = function(BTID){
+  clickeidt = layer.open({
+      type: 2,
+      title: '运行结果--可关闭窗口在后台运行',
+      shadeClose: false,
+      shade: 0.8,
+      area: ['500px', '500px'],
+      content: '/linkButton/RunShell?BTID=' +BTID,
+  });
 
+}
             clickLinkButton = function(){
               BTID = event.srcElement.id;
               SHELL = '';
@@ -171,8 +181,10 @@
                                         success:function(data){
                                           resultCode = jQuery.parseJSON(data).resultCode;
                                               if (resultCode == '0') {
-                                                  layer.msg('执行成功');
+                                                  layer.msg('保存成功');
                                                   GetAllLinkButton()
+                                                  runLinkButtonShell(BTID)
+                                                  
                                               } 
                                               else{layer.alert(jQuery.parseJSON(data).result,{title:false,skin: "layui-layer-molv",area: ["250px", "150px"],time: 10000,btn:["知道了"]})}
                                         }
