@@ -1,9 +1,9 @@
-from flask import request,render_template,redirect,url_for,session
+from flask import request,render_template,redirect,url_for,session,Response
 import time
 from index import app,sql,url
 import json
 import os
-import base64
+import base64,chardet
 import traceback
 from .login import cklogin
 url.append( {
@@ -78,9 +78,37 @@ def RunLinkButton():
     SearchShell = sql.selectShellForLinkButton(BTID)[0][0]
     if SearchShell != SHELL:
         result = sql.updateLinkButton(BTID,SHELL)
-    import subprocess
-    subprocess.Popen(SHELL,shell=True)
     return json.dumps({'resultCode':0})
+
+@app.route('/linkButton/RunShell',methods=['GET'])
+@cklogin()
+def RunLinkButtonRunShell():
+    BTID = request.values.get('BTID')
+    if not BTID:
+        return json.dumps({'resultCode':1,'result':'???'}) 
+    SearchShell = sql.selectShellForLinkButton(BTID)[0][0]
+    import subprocess
+    process = subprocess.Popen(
+            SearchShell,
+            shell=True,
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.STDOUT)
+    def getShellRunInfo(process):
+        while process.poll() == None:
+            time.sleep(0.1)
+            lineData = process.stdout.readline()
+            char=chardet.detect(lineData)
+            fileCoding = char['encoding']
+            if fileCoding == 'GB2312' or not fileCoding or fileCoding == 'TIS-620' or fileCoding == 'ISO-8859-9': fileCoding = 'GBK';
+            if fileCoding == 'ascii' or fileCoding == 'ISO-8859-1': fileCoding = 'utf-8';
+            if fileCoding == 'Big5': fileCoding = 'BIG5';
+            if not fileCoding in ['GBK','utf-8','BIG5']: fileCoding = 'utf-8';
+            if not fileCoding:
+                fileCoding='utf-8'
+            lineData = lineData.decode(fileCoding).encode('utf-8')
+            yield lineData.replace(b'\n',b'<br>')
+        yield "<br><br>----------------------------------------------<br>执行完成".encode()
+    return Response(getShellRunInfo(process))
 
 
 #--------#
