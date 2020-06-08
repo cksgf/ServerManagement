@@ -140,7 +140,7 @@ def pluginsinstallMysql():
     MYSQLSTATUS = True
     name = ['MySQL 5.1.73','MySQL 5.5.62','MySQL 5.6.42','MySQL 5.7.24','MySQL 8.0.13','MariaDB 5.5.62','MariaDB 10.0.37','MariaDB 10.1.37','MariaDB 10.2.19','MariaDB 10.3.11'][int(version)-1]
     def getMysqlInfo(mysqlProcess):
-        yield bytes("<h2>正在安装%s...密码设为%s 请稍等,安装完后会自动跳转...</h2>" %(name,rootpwd),'utf-8')
+        yield bytes("<h2>正在安装%s...密码设为%s .请稍等,安装完后会自动跳转...</h2>" %(name,rootpwd),'utf-8')
         while mysqlProcess.poll() == None:
             time.sleep(0.1)
             yield mysqlProcess.stdout.readline().replace(b'\n',b'<br>')
